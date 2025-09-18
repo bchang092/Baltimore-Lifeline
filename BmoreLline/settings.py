@@ -51,13 +51,25 @@ TEMPLATES = [
 WSGI_APPLICATION = 'BmoreLline.wsgi.application'
 
 # Database: prefer DATABASE_URL on Heroku, fall back to sqlite locally
-DATABASES = {
-    'default': dj_database_url.config(
-        conn_max_age=600,
-        ssl_require=True,
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-    )
-}
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL:
+    # On Heroku/production – likely Postgres
+    DATABASES = {
+        "default": dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=True  # OK for Postgres
+        )
+    }
+else:
+    # Local dev – use SQLite without sslmode
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'

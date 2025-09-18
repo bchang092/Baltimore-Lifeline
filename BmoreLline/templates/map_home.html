@@ -1,198 +1,233 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Resource Map</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <meta charset="utf-8" />
+ <title>Resource Map</title>
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Leaflet CSS -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-  />
 
-  <style>
-    html, body { height: 100%; margin: 0; }
-    #map { height: 100vh; width: 100%; }
-    .leaflet-popup-content strong { display: block; margin-bottom: 4px; }
-    .map-toolbar {
-      position: absolute; z-index: 1000; top: 10px; left: 10px;
-      background: white; padding: 8px 10px; border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-family: system-ui, sans-serif;
-      max-width: min(90vw, 520px);
-    }
-    .map-toolbar input, .map-toolbar select, .map-toolbar button {
-      font-size: 14px; padding: 6px 8px; margin-right: 6px;
-    }
-    .legend {
-      margin-top: 6px; font-size: 12px; line-height: 1.4;
-    }
-    .legend-item {
-      display: inline-flex; align-items: center; margin-right: 10px; margin-top: 4px;
-    }
-    .legend-swatch {
-      width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px;
-    }
-    .popup-actions a {
-      display: inline-block; margin-top: 6px; text-decoration: underline;
-    }
-  </style>
+ <!-- Leaflet CSS -->
+ <link
+   rel="stylesheet"
+   href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+   integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+   crossorigin=""
+ />
+
+
+ <style>
+   html, body { height: 100%; margin: 0; }
+   #map { height: 100vh; width: 100%; }
+   .leaflet-popup-content strong { display: block; margin-bottom: 4px; }
+   .map-toolbar {
+     position: absolute; z-index: 1000; top: 10px; left: 10px;
+     background: white; padding: 8px 10px; border-radius: 8px;
+     box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-family: system-ui, sans-serif;
+     max-width: min(90vw, 520px);
+   }
+   .map-toolbar input, .map-toolbar select, .map-toolbar button {
+     font-size: 14px; padding: 6px 8px; margin-right: 6px;
+   }
+   .legend {
+     margin-top: 6px; font-size: 12px; line-height: 1.4;
+   }
+   .legend-item {
+     display: inline-flex; align-items: center; margin-right: 10px; margin-top: 4px;
+   }
+   .legend-swatch {
+     width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px;
+   }
+   .popup-actions a {
+     display: inline-block; margin-top: 6px; text-decoration: underline;
+   }
+ </style>
 </head>
 <body>
 
-  <div class="map-toolbar" role="region" aria-label="Map search and filters">
-    <div>
-      <input id="searchInput" type="text" placeholder="Search name or address…" aria-label="Search" />
-      <select id="categoryFilter" aria-label="Filter by category">
-        <option value="">All categories</option>
-        <option value="Health">Health</option>
-        <option value="Food">Food</option>
-        <option value="Legal">Legal</option>
-        <!-- insert more categories here -->
-      </select>
-      <button id="resetBtn" type="button">Reset</button>
-    </div>
 
-    <!-- Color legend -->
-    <div class="legend" id="legend"></div>
-  </div>
-
-  <div id="map" role="application" aria-label="Resource map"></div>
-
-  <!-- Safely embed backend data (Django) -->
-  {{ resources|json_script:"resources-data" }}
-
-  <!-- Leaflet JS -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
-
-  <script>
-    // Parse backend data
-    const resources = JSON.parse(document.getElementById("resources-data").textContent);
-
-    // Initialize map
-    const map = L.map("map");
-
-    // Base tiles
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    // Create a layer group to manage markers
-    const markerLayer = L.layerGroup().addTo(map);
-
-    // Category color map (customize as needed)
-    const CATEGORY_COLORS = {
-      Health: "#1e90ff",
-      Food: "#28a745",
-      Legal: "#ff6b6b",
-      default: "#6c757d",
-    };
-
-    function colorForCategory(cat) {
-      return CATEGORY_COLORS[cat] || CATEGORY_COLORS.default;
-    }
-
-    // Build legend from CATEGORY_COLORS (excluding 'default')
-    (function renderLegend() {
-      const legend = document.getElementById("legend");
-      const entries = Object.keys(CATEGORY_COLORS).filter(k => k !== "default");
-      legend.innerHTML = entries.map(k => (
-        `<span class="legend-item">
-           <span class="legend-swatch" style="background:${CATEGORY_COLORS[k]}"></span>${k}
-         </span>`
-      )).join("");
-    })();
-
-    function makePopup(r) {
-      const dest = r.address ? encodeURIComponent(r.address) : `${r.lat},${r.lng}`;
-      const gmaps = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
-
-      const html = `
-        <strong>${r.name || "Unnamed resource"}</strong>
-        <div>${r.category || "Uncategorized"}</div>
-        ${r.address ? `<div>Address: ${r.address}</div>` : ``}
-        ${r.phone_number ? `<div>Phone Number: ${r.phone_number}</div>` : ``}
-        ${r.description ? `<p>${r.description}</p>` : ``}
-        <div class="popup-actions">
-          <a href="${gmaps}" target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
-        </div>
-      `;
-      return html;
-    }
-
-    function addMarkers(data) {
-      markerLayer.clearLayers();
-      const bounds = [];
-
-      data.forEach(r => {
-        if (typeof r.lat !== "number" || typeof r.lng !== "number") return;
-
-        const color = colorForCategory(r.category);
-
-        // Custom colored pin icon
-        const icon = L.divIcon({
-          className: "custom-pin",
-          html: `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="24" height="36">
-              <path d="M12 0C5.4 0 0 5.4 0 12c0 7.5 12 24 12 24s12-16.5 12-24c0-6.6-5.4-12-12-12z"
-                    fill="${color}" stroke="white" stroke-width="2"/>
-            </svg>`,
-          iconSize: [24, 36],
-          iconAnchor: [12, 36],   // bottom tip of the pin
-          popupAnchor: [0, -36]   // place popup above pin
-        });
-
-        const marker = L.marker([r.lat, r.lng], { icon })
-          .bindPopup(makePopup(r), { maxWidth: 320 });
-
-        marker.addTo(markerLayer);
-        bounds.push([r.lat, r.lng]);
-      });
-
-      if (bounds.length) {
-        map.fitBounds(bounds, { padding: [30, 30] });
-      } else {
-        map.setView([39.5, -98.35], 4);
-      }
-    }
+ <div class="map-toolbar" role="region" aria-label="Map search and filters">
+   <div>
+     <input id="searchInput" type="text" placeholder="Search name or address…" aria-label="Search" />
+     <select id="categoryFilter" aria-label="Filter by category">
+       <option value="">All categories</option>
+       <option value="Health">Health</option>
+       <option value="Food">Food</option>
+       <option value="Legal">Legal</option>
+     </select>
+     <button id="resetBtn" type="button">Reset</button>
+   </div>
+   <!-- Color legend -->
+   <div class="legend" id="legend"></div>
+ </div>
 
 
-    // Initial render
-    addMarkers(resources);
+ <div id="map" role="application" aria-label="Resource map"></div>
 
-    // Simple client-side filter/search
-    const searchInput = document.getElementById("searchInput");
-    const categoryFilter = document.getElementById("categoryFilter");
-    const resetBtn = document.getElementById("resetBtn");
 
-    function applyFilters() {
-      const q = (searchInput.value || "").toLowerCase().trim();
-      const cat = categoryFilter.value;
+ <!-- Safely embed backend data (Django) -->
+ {{ resources|json_script:"resources-data" }}
 
-      const filtered = resources.filter(r => {
-        const inCat = !cat || r.category === cat;
-        const text = `${r.name || ""} ${r.address || ""}`.toLowerCase();
-        const matches = !q || text.includes(q);
-        return inCat && matches;
-      });
 
-      addMarkers(filtered);
-    }
+ <!-- Leaflet JS -->
+ <script
+   src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+   integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+   crossorigin=""
+ ></script>
 
-    searchInput.addEventListener("input", applyFilters);
-    categoryFilter.addEventListener("change", applyFilters);
-    resetBtn.addEventListener("click", () => {
-      searchInput.value = "";
-      categoryFilter.value = "";
-      addMarkers(resources);
-    });
-  </script>
+
+ <script>
+   // Parse backend data
+   const resources = JSON.parse(document.getElementById("resources-data").textContent);
+
+
+   // Initialize map without zoom controls
+   const map = L.map("map", {
+     zoomControl: false
+   });
+
+
+   // Add zoom control on the top-right (instead of left)
+   L.control.zoom({
+     position: "topright"
+   }).addTo(map);
+
+
+   // Base tiles
+   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+     maxZoom: 19,
+     attribution: '&copy; OpenStreetMap contributors'
+   }).addTo(map);
+
+
+   // Create a layer group to manage markers
+   const markerLayer = L.layerGroup().addTo(map);
+
+
+   // Category color map
+   const CATEGORY_COLORS = {
+     Health: "#1e90ff",
+     Food: "#28a745",
+     Legal: "#ff6b6b",
+     default: "#6c757d",
+   };
+
+
+   function colorForCategory(cat) {
+     return CATEGORY_COLORS[cat] || CATEGORY_COLORS.default;
+   }
+
+
+   // Build legend
+   (function renderLegend() {
+     const legend = document.getElementById("legend");
+     const entries = Object.keys(CATEGORY_COLORS).filter(k => k !== "default");
+     legend.innerHTML = entries.map(k => (
+       `<span class="legend-item">
+          <span class="legend-swatch" style="background:${CATEGORY_COLORS[k]}"></span>${k}
+        </span>`
+     )).join("");
+   })();
+
+
+   function makePopup(r) {
+     const dest = r.address ? encodeURIComponent(r.address) : `${r.lat},${r.lng}`;
+     const gmaps = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
+
+
+     return `
+       <strong>${r.name || "Unnamed resource"}</strong>
+       <div>${r.category || "Uncategorized"}</div>
+       ${r.address ? `<div>Address: ${r.address}</div>` : ``}
+       ${r.phone_number ? `<div>Phone Number: ${r.phone_number}</div>` : ``}
+       ${r.description ? `<p>${r.description}</p>` : ``}
+       <div class="popup-actions">
+         <a href="${gmaps}" target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
+       </div>
+     `;
+   }
+
+
+   function addMarkers(data) {
+     markerLayer.clearLayers();
+     const bounds = [];
+
+
+     data.forEach(r => {
+       if (typeof r.lat !== "number" || typeof r.lng !== "number") return;
+
+
+       const color = colorForCategory(r.category);
+
+
+       // Custom colored pin icon
+       const icon = L.divIcon({
+         className: "custom-pin",
+         html: `
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="24" height="36">
+             <path d="M12 0C5.4 0 0 5.4 0 12c0 7.5 12 24 12 24s12-16.5 12-24c0-6.6-5.4-12-12-12z"
+                   fill="${color}" stroke="white" stroke-width="2"/>
+           </svg>`,
+         iconSize: [24, 36],
+         iconAnchor: [12, 36],
+         popupAnchor: [0, -36]
+       });
+
+
+       const marker = L.marker([r.lat, r.lng], { icon })
+         .bindPopup(makePopup(r), { maxWidth: 320 });
+
+
+       marker.addTo(markerLayer);
+       bounds.push([r.lat, r.lng]);
+     });
+
+
+     if (bounds.length) {
+       map.fitBounds(bounds, { padding: [30, 30] });
+     } else {
+       map.setView([39.5, -98.35], 4);
+     }
+   }
+
+
+   // Initial render
+   addMarkers(resources);
+
+
+   // Filters
+   const searchInput = document.getElementById("searchInput");
+   const categoryFilter = document.getElementById("categoryFilter");
+   const resetBtn = document.getElementById("resetBtn");
+
+
+   function applyFilters() {
+     const q = (searchInput.value || "").toLowerCase().trim();
+     const cat = categoryFilter.value;
+
+
+     const filtered = resources.filter(r => {
+       const inCat = !cat || r.category === cat;
+       const text = `${r.name || ""} ${r.address || ""}`.toLowerCase();
+       const matches = !q || text.includes(q);
+       return inCat && matches;
+     });
+
+
+     addMarkers(filtered);
+   }
+
+
+   searchInput.addEventListener("input", applyFilters);
+   categoryFilter.addEventListener("change", applyFilters);
+   resetBtn.addEventListener("click", () => {
+     searchInput.value = "";
+     categoryFilter.value = "";
+     addMarkers(resources);
+   });
+ </script>
 </body>
 </html>
+
+
+

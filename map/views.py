@@ -46,3 +46,11 @@ def resources_map(request):
         },
     ]
     return render(request, "map_home.html", {"resources": resources})
+
+def home_page(request):
+    return render(request,"home.html")
+
+
+#debug
+from django.http import HttpResponse
+def ping(request): return HttpResponse("pong")

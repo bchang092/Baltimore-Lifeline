@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Baltimore Lifeline</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --bg: #0f172a;         /* slate-900 */
+      --card: #111827;       /* gray-900 */
+      --text: #e5e7eb;       /* gray-200 */
+      --muted: #9ca3af;      /* gray-400 */
+      --accent: #38bdf8;     /* sky-400 */
+      --accent-2: #10b981;   /* emerald-500 */
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: linear-gradient(180deg, var(--bg), #111827 60%, #0b1220);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+
+      /* mobile safe-area (notch) padding */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    /* Layout helpers */
+    .container { max-width: 1000px; margin: 0 auto; padding: 24px; }
+    .center { display: grid; place-items: center; justify-items: center; }
+
+    /* Hero */
+    .hero {
+      /* Use svh/dvh for mobile browser chrome accuracy */
+      min-height: 80svh;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 48px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4.2rem);
+      margin: 0 0 20px 0;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      text-shadow: 0 6px 24px rgba(0,0,0,0.35);
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeUp 800ms ease forwards 120ms;
+    }
+    .hero p {
+      max-width: 720px;
+      margin: 0 auto 36px auto;
+      color: var(--muted);
+      font-size: clamp(1rem, 2.2vw, 1.15rem);
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeUp 800ms ease forwards 240ms;
+    }
+
+    /* Big CTA button */
+    .cta {
+        display: inline-flex;          /* inline-flex keeps it naturally centered inside container */
+        align-items: center;           /* vertical centering */
+        justify-content: center;       /* keep text+arrow centered */
+        gap: 10px;
+
+        padding: 18px 28px;
+        font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+        font-weight: 700;
+        color: #0b1220;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        border: 0;
+        border-radius: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        box-shadow: 0 10px 24px rgba(16,185,129,0.25), 0 4px 10px rgba(56,189,248,0.25);
+        transform: translateY(12px);
+        opacity: 0;
+        animation: fadeUp 800ms ease forwards 360ms;
+
+        width: 100%;
+        max-width: 320px;              /* narrower so it doesn’t look “off center” */
+        min-height: 56px;              /* comfy touch target */
+        text-align: center;
+    }
+    .cta:hover { filter: brightness(1.05); transform: translateY(10px); }
+    .cta .arrow {
+        flex-shrink: 0;                /* arrow stays the same size */
+        display: block;
+        transition: transform .2s ease;
+    }
+    .cta:hover .arrow { transform: translateX(4px); }
+    .cta:active { transform: translateY(12px) scale(0.99); }
+
+    /* Subtle floating shapes */
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(40px);
+      opacity: 0.35;
+      animation: float 12s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .orb.one { width: 320px; height: 320px; background: #22d3ee; top: -80px; left: -60px; }
+    .orb.two { width: 260px; height: 260px; background: #34d399; bottom: -60px; right: -40px; animation-delay: 2.5s; }
+
+    /* About section with scroll reveal */
+    .about {
+      /* slightly tighter on phones */
+      padding: 56px 16px 96px;
+      background: linear-gradient(180deg, transparent, rgba(255,255,255,0.02));
+    }
+    .about h2 {
+      font-size: clamp(1.8rem, 3.6vw, 2.4rem);
+      margin: 0 0 14px 0;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    .about p {
+      color: #cbd5e1;
+      max-width: 900px;
+      margin: 0 auto 12px auto;
+      font-size: clamp(1rem, 2.1vw, 1.1rem);
+    }
+
+    /* Cards */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+      margin-top: 26px;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 18px;
+      min-height: 140px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+      opacity: 0;
+      transform: translateY(16px);
+      transition: transform .5s ease, opacity .6s ease, border-color .2s ease;
+    }
+    .card:hover { transform: translateY(10px); border-color: rgba(56,189,248,0.35); }
+    .card h3 { margin: 0 0 8px 0; font-size: 1.05rem; }
+    .card p { margin: 0; color: #a3a9b6; font-size: .98rem; }
+
+    /* Footer */
+    footer {
+      color: #9aa3b2;
+      font-size: .9rem;
+      text-align: center;
+      padding: 36px 12px 60px;
+    }
+
+    /* Animations */
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0); }
+      50% { transform: translateY(-16px) translateX(8px); }
+    }
+
+    /* Reveal helper */
+    .reveal { opacity: 0; transform: translateY(14px); }
+    .reveal.visible { opacity: 1; transform: translateY(0); transition: opacity .6s ease, transform .6s ease; }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      .cta, .hero h1, .hero p, .card, .orb { animation: none !important; transform: none !important; }
+    }
+
+    /* Anchor link styling */
+    .ghost-link {
+      display: inline-block; margin-top: 18px;
+      color: var(--accent); text-decoration: none;
+    }
+    .ghost-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+
+    <div class="container center">
+      <div>
+        <h1><span style="opacity:.9">Baltimore</span> <span style="color:var(--accent)">Lifeline</span></h1>
+        <p>
+          A simple way to find nearby health, food, and legal resources across Baltimore —
+          fast, clear, and mobile-friendly.
+        </p>
+
+        <!-- Big CTA to map -->
+        <a class="cta" href="{% url 'resources_map' %}" aria-label="Open the resources map">
+          Open the Map
+          <svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h12M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+
+        <div>
+          <a class="ghost-link" href="#about">Learn more ↓</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" class="about">
+    <div class="container">
+      <h2 class="reveal">About Us</h2>
+      <p class="reveal">
+        Baltimore Lifeline is a volunteer-driven effort to connect residents with critical services.
+        Our interactive map highlights clinics, food resources, and legal aid—curated for clarity and speed.
+      </p>
+      <p class="reveal">
+        We believe access should be simple. If you have suggestions or updates, we’d love to hear from you.
+      </p>
+
+      <div class="grid">
+        <div class="card reveal">
+          <h3>Up-to-date Data</h3>
+          <p>We keep locations current so you can rely on the information you see.</p>
+        </div>
+        <div class="card reveal">
+          <h3>Mobile-first</h3>
+          <p>Built to work smoothly on phones used in the field by volunteers and residents alike.</p>
+        </div>
+        <div class="card reveal">
+          <h3>Open & Community-led</h3>
+          <p>Suggestions from the community help us improve coverage and accuracy.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>© <span id="y"></span> Baltimore Lifeline</footer>
+
+  <script>
+    // Current year
+    document.getElementById('y').textContent = new Date().getFullYear();
+
+    // Scroll reveal for .reveal elements
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  </script>
+</body>
+</html>

@@ -8,7 +8,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-insecure-key")  # set on Heroku!
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.herokuapp.com']
-
+#test
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

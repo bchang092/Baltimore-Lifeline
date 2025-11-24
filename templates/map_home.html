@@ -2,9 +2,8 @@
 <!doctype html>
 <html lang="en">
 <head>
-
   <meta charset="utf-8" />
-  <title>Resource Map</title>
+  <title>Baltimore Lifeline – Resource Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Leaflet CSS -->
@@ -17,17 +16,10 @@
 
   <style>
     :root{
-      --bg: #0f172a;           /* slate-900 */
-      --bg-2: #0b1220;         /* deep slate */
-      --panel: #111827;        /* gray-900 */
-      --text: #e5e7eb;         /* gray-200 */
-      --muted: #9ca3af;        /* gray-400 */
-      --border: rgba(255,255,255,0.08);
-      --shadow: rgba(0,0,0,0.35);
-      --accent: #38bdf8;       /* sky-400 */
-      --accent-2: #10b981;     /* emerald-500 */
+      --bg: #0f172a; --bg-2: #0b1220; --panel: #111827; --text: #e5e7eb;
+      --muted: #9ca3af; --border: rgba(255,255,255,0.08); --shadow: rgba(0,0,0,0.35);
+      --accent: #38bdf8; --accent-2: #10b981; --warning: #f59e0b; --danger: #ef4444;
     }
-
     html, body { height: 100%; margin: 0; }
     body {
       height: 100%;
@@ -35,34 +27,21 @@
       color: var(--text);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, sans-serif;
       line-height: 1.45;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-
-      /* mobile safe-area (notch) padding */
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
-      padding-left: env(safe-area-inset-left);
-      padding-right: env(safe-area-inset-right);
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
-
     #map { height: 100vh; width: 100%; }
 
-    /* Dark toolbar */
     .map-toolbar {
       position: absolute; z-index: 1000; top: 10px; left: 10px;
-      background: rgba(17, 24, 39, 0.92); /* var(--panel) with slight translucency */
-      backdrop-filter: saturate(140%) blur(4px);
-      padding: 10px 12px; border-radius: 12px;
-      box-shadow: 0 8px 24px var(--shadow);
-      border: 1px solid var(--border);
-      max-width: min(90vw, 760px);
-      color: var(--text);
+      background: rgba(17, 24, 39, 0.92); backdrop-filter: saturate(140%) blur(4px);
+      padding: 10px 12px; border-radius: 12px; box-shadow: 0 8px 24px var(--shadow);
+      border: 1px solid var(--border); max-width: min(90vw, 820px); color: var(--text);
     }
-    .map-toolbar input, .map-toolbar select, .map-toolbar button {
+    .map-toolbar input, .map-toolbar button {
       font-size: 14px; padding: 8px 10px; margin-right: 6px; margin-top: 6px;
       border-radius: 10px; border: 1px solid var(--border);
-      background: #0e1524; color: var(--text);
-      outline: none;
+      background: #0e1524; color: var(--text); outline: none;
     }
     .map-toolbar input::placeholder { color: #94a3b8; }
     .map-toolbar button {
@@ -70,18 +49,29 @@
       color: #081018; font-weight: 700; border: 0; cursor: pointer;
       box-shadow: 0 6px 16px rgba(56,189,248,0.25), 0 4px 10px rgba(16,185,129,0.20);
     }
-    .legend {
-      margin-top: 6px; font-size: 12px; line-height: 1.4; color: #cbd5e1;
+    .legend { margin-top: 6px; font-size: 12px; line-height: 1.4; color: #cbd5e1; }
+    .legend-item { display: inline-flex; align-items: center; margin-right: 12px; margin-top: 6px; }
+    .legend-swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.2) inset; }
+
+    .tag-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
     }
-    .legend-item {
-      display: inline-flex; align-items: center; margin-right: 12px; margin-top: 6px;
+    .filter-pill {
+      cursor: pointer;
+      opacity: 0.85;
+      background: rgba(15,23,42,0.9);
     }
-    .legend-swatch {
-      width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px;
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.2) inset;
+    .filter-pill.active {
+      opacity: 1;
+      background: rgba(56,189,248,0.14);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56,189,248,0.6) inset;
     }
 
-    /* Dark Leaflet controls */
     .leaflet-control-zoom a {
       background: #0e1524; color: var(--text); border: 1px solid var(--border);
       box-shadow: 0 4px 12px var(--shadow);
@@ -93,54 +83,36 @@
     }
     .leaflet-container a { color: var(--accent); }
 
-    /* Sidebar panel */
     .sidebar {
-      position: absolute; z-index: 1100; top: 0; right: 0; height: 100%;
-      width: min(420px, 92vw);
-      background: linear-gradient(180deg, #0b1220, #0e1526);
-      color: var(--text);
-      box-shadow: -12px 0 28px rgba(0,0,0,0.45);
-      border-left: 1px solid var(--border);
-      transform: translateX(100%);
-      transition: transform .28s ease;
-      display: flex; flex-direction: column;
+      position: absolute; z-index: 1100; top: 0; right: 0; height: 100%; width: min(420px, 92vw);
+      background: linear-gradient(180deg, #0b1220, #0e1526); color: var(--text);
+      box-shadow: -12px 0 28px rgba(0,0,0,0.45); border-left: 1px solid var(--border);
+      transform: translateX(100%); transition: transform .28s ease; display: flex; flex-direction: column;
     }
     .sidebar.open { transform: translateX(0); }
-    .sidebar-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 16px; border-bottom: 1px solid var(--border);
-      background: rgba(255,255,255,0.02);
+    .sidebar-header { display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+    .sidebar-title { margin: 0; font-size: 1.05rem; font-weight: 800; letter-spacing: .2px; }
+    .sidebar-close { background: #0e1524; color: #cbd5e1; border: 1px solid var(--border);
+      border-radius: 10px; padding: 6px 10px; cursor: pointer; }
+    .sidebar-body { padding: 14px 16px 18px; overflow-y: auto; }
+
+    .sidebar a {
+      color: #7dd3fc;              /* light blue links */
     }
-    .sidebar-title {
-      margin: 0; font-size: 1.05rem; font-weight: 800; letter-spacing: .2px;
+    .sidebar a:hover {
+      color: #bae6fd;
     }
-    .sidebar-close {
-      background: #0e1524; color: #cbd5e1; border: 1px solid var(--border);
-      border-radius: 10px; padding: 6px 10px; cursor: pointer;
-    }
-    .sidebar-body {
-      padding: 14px 16px 18px; overflow-y: auto;
-    }
-    .pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 6px 10px; border-radius: 999px; font-size: 12px;
-      background: rgba(148,163,184,0.12); border: 1px solid var(--border);
-      color: #cbd5e1; margin-bottom: 10px;
-    }
+
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 12px;
+      background: rgba(148,163,184,0.12); border: 1px solid var(--border); color: #cbd5e1; margin: 0 8px 10px 0; }
     .field { margin: 10px 0; color: #cbd5e1; }
     .label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 2px; }
-    .link-btn {
-      display: inline-flex; align-items: center; gap: 8px;
+    .link-btn { display: inline-flex; align-items: center; gap: 8px;
       background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #081018; font-weight: 800; text-decoration: none;
-      border-radius: 12px; padding: 10px 14px; margin-top: 8px;
-      box-shadow: 0 6px 16px rgba(56,189,248,0.25), 0 4px 10px rgba(16,185,129,0.20);
-    }
+      color: #081018; font-weight: 800; text-decoration: none; border-radius: 12px; padding: 10px 14px; margin-top: 8px;
+      box-shadow: 0 6px 16px rgba(56,189,248,0.25), 0 4px 10px rgba(16,185,129,0.20); }
 
-    /* Custom pin container (SVG injected) */
-    .custom-pin { /* no extra styles needed; keep for clarity */ }
-
-    /* Mobile tweaks */
     @media (max-width: 640px) {
       .map-toolbar { left: 8px; right: 8px; max-width: calc(100vw - 16px); }
     }
@@ -152,33 +124,25 @@
   <div class="map-toolbar" role="region" aria-label="Map search and filters">
     <div>
       <input id="searchInput" type="text" placeholder="Search address or name of service" aria-label="Search" />
-      <select id="categoryFilter" aria-label="Filter by category">
-        <option value="">All categories</option>
-        <option value="Health">Health</option>
-        <option value="Food">Food</option>
-        <option value="Legal">Legal</option>
-        <!-- more categories add here -->
-      </select>
       <button id="resetBtn" type="button">Reset</button>
     </div>
+    <div id="categoryTags" class="tag-container" aria-label="Filter by category"></div>
     <div class="legend" id="legend"></div>
   </div>
 
   <!-- Map -->
   <div id="map" role="application" aria-label="Resource map"></div>
 
-  <!-- Sidebar (hidden by default) -->
+  <!-- Sidebar -->
   <aside id="sidebar" class="sidebar" aria-hidden="true">
     <div class="sidebar-header">
       <h3 class="sidebar-title" id="sidebar-title">Details</h3>
       <button id="sidebar-close" class="sidebar-close" type="button" aria-label="Close details">Close</button>
     </div>
-    <div class="sidebar-body" id="sidebar-body">
-      <!-- Filled dynamically -->
-    </div>
+    <div class="sidebar-body" id="sidebar-body"></div>
   </aside>
 
-  <!-- Safely embed backend data (Django) -->
+  <!-- Embed backend data -->
   {{ resources|json_script:"resources-data" }}
 
   <!-- Leaflet JS -->
@@ -189,80 +153,183 @@
   ></script>
 
   <script>
-    // Parse backend data
     const resources = JSON.parse(document.getElementById("resources-data").textContent);
 
-    // Initialize map without zoom controls
     const map = L.map("map", { zoomControl: false });
-
-    // Add zoom control on the top-right
     L.control.zoom({ position: "topright" }).addTo(map);
-
-    // Base tiles
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Layer for markers
     const markerLayer = L.layerGroup().addTo(map);
 
-    // Category color map
-    const CATEGORY_COLORS = {
-      Health: "#1e90ff",
-      Food: "#28a745",
-      Legal: "#ff6b6b",
-      default: "#6c757d",
-    };
-    const colorForCategory = (cat) => CATEGORY_COLORS[cat] || CATEGORY_COLORS.default;
+    const PALETTE = ["#1e90ff","#28a745","#ff6b6b","#f59e0b","#a78bfa","#14b8a6","#f472b6","#ef4444","#22c55e","#60a5fa"];
+    const categoryColorMap = new Map();
+    function colorForCategory(cat) {
+      if (!cat) return "#6c757d";
+      if (!categoryColorMap.has(cat)) {
+        categoryColorMap.set(cat, PALETTE[categoryColorMap.size % PALETTE.length]);
+      }
+      return categoryColorMap.get(cat);
+    }
 
-    // Build legend
-    (function renderLegend() {
+    // ----- Category tag filtering -----
+    const activeCategories = new Set(); // empty => All
+
+    function renderCategoryTags() {
+      const categories = Array.from(new Set(resources.map(r => r.category).filter(Boolean))).sort();
+      const container = document.getElementById("categoryTags");
+      container.innerHTML = "";
+
+      // "All" pill
+      const allPill = document.createElement("button");
+      allPill.type = "button";
+      allPill.textContent = "All";
+      allPill.className = "pill filter-pill active";
+      allPill.dataset.category = "__ALL__";
+      container.appendChild(allPill);
+
+      // Category pills
+      categories.forEach(c => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = c;
+        btn.className = "pill filter-pill";
+        btn.dataset.category = c;
+        container.appendChild(btn);
+      });
+
+      // Click handler (event delegation)
+      container.addEventListener("click", (e) => {
+        const pill = e.target.closest(".filter-pill");
+        if (!pill) return;
+        const cat = pill.dataset.category;
+        toggleCategory(cat);
+      });
+    }
+
+    function updatePillStates() {
+      const allPill = document.querySelector('.filter-pill[data-category="__ALL__"]');
+      const usingAll = activeCategories.size === 0;
+
+      if (allPill) {
+        allPill.classList.toggle("active", usingAll);
+      }
+
+      document.querySelectorAll('.filter-pill').forEach(p => {
+        const cat = p.dataset.category;
+        if (cat === "__ALL__") return;
+        p.classList.toggle("active", activeCategories.has(cat));
+      });
+    }
+
+    function toggleCategory(cat) {
+      if (cat === "__ALL__") {
+        // Reset to "All" – clear specific selections
+        activeCategories.clear();
+      } else {
+        if (activeCategories.has(cat)) {
+          activeCategories.delete(cat);
+        } else {
+          activeCategories.add(cat);
+        }
+      }
+      updatePillStates();
+      applyFilters();
+    }
+
+    renderCategoryTags();
+
+    function updateLegend(data) {
       const legend = document.getElementById("legend");
-      const entries = Object.keys(CATEGORY_COLORS).filter(k => k !== "default");
-      legend.innerHTML = entries.map(k => (
+      const categories = Array.from(new Set(data.map(r => r.category).filter(Boolean))).sort();
+      if (!categories.length) {
+        legend.innerHTML = "";
+        return;
+      }
+      legend.innerHTML = categories.map(c => (
         `<span class="legend-item">
-           <span class="legend-swatch" style="background:${CATEGORY_COLORS[k]}"></span>${k}
+           <span class="legend-swatch" style="background:${colorForCategory(c)}"></span>${c}
          </span>`
       )).join("");
-    })();
+    }
 
-    // Sidebar helpers
+    // ----- Sidebar -----
     const sidebarEl = document.getElementById('sidebar');
     const sidebarTitleEl = document.getElementById('sidebar-title');
     const sidebarBodyEl = document.getElementById('sidebar-body');
     const sidebarCloseBtn = document.getElementById('sidebar-close');
 
-    function openSidebar(resource) {
-      const dest = resource.address ? encodeURIComponent(resource.address) : `${resource.lat},${resource.lng}`;
+    function pill(text, bg) {
+      return `<span class="pill" style="border-color:${bg}; box-shadow:0 0 0 1px ${bg} inset;">${text}</span>`;
+    }
+
+    function openSidebar(r) {
+      const dest = r.address ? encodeURIComponent(r.address) : `${r.lat},${r.lng}`;
       const gmaps = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
 
-      sidebarTitleEl.textContent = resource.name || 'Unnamed resource';
-      const catColor = colorForCategory(resource.category);
+      const catColor = colorForCategory(r.category);
 
+      // RELIABILITY / STATUS
+      let statusPill = "";
+      const rawRel = (r.reliability || "").toString().trim().toLowerCase();
+      const rating = parseFloat(rawRel);
+      const hasNumericRating = !isNaN(rating);
+
+      let showLowScoreDetails = false;
+
+      if (hasNumericRating && rating >= 5) {
+        statusPill = pill("Legit ✓", "#22c55e");
+      } else if (hasNumericRating && rating < 5) {
+        statusPill = pill("Not verified", "#f97316");
+        showLowScoreDetails = true;
+      } else {
+        statusPill = pill("Not yet confirmed", "#f59e0b");
+      }
+
+      const phoneHtml = r.phone_number
+        ? `<div class="field"><span class="label">Phone</span><div>${r.phone_number}</div></div>`
+        : "";
+      const emailHtml = r.email
+        ? `<div class="field"><span class="label">Email</span><div><a href="mailto:${r.email}">${r.email}</a></div></div>`
+        : "";
+      const linkHtml = r.link
+        ? `<div class="field"><span class="label">Website</span><div><a href="${r.link}" target="_blank" rel="noopener">${r.link}</a></div></div>`
+        : "";
+      const restrHtml = r.restrictions
+        ? `<div class="field"><span class="label">Restrictions</span><div>${r.restrictions}</div></div>`
+        : "";
+      const daysHtml = r.days
+        ? `<div class="field"><span class="label">Days</span><div>${r.days}</div></div>`
+        : "";
+      const notesHtml = (showLowScoreDetails && r.call_experience)
+        ? `<div class="field"><span class="label">Call experience</span><div>${r.call_experience}</div></div>`
+        : "";
+      const metricsHtml = (showLowScoreDetails && r.metrics)
+        ? `<div class="field"><span class="label">Metrics</span><div>${r.metrics}</div></div>`
+        : "";
+
+      sidebarTitleEl.textContent = r.name || "Unnamed resource";
       sidebarBodyEl.innerHTML = `
         <div class="pill" style="border-color:${catColor}; box-shadow: 0 0 0 1px ${catColor} inset;">
           <span style="width:10px;height:10px;border-radius:50%;background:${catColor};display:inline-block;"></span>
-          <span>${resource.category || 'Uncategorized'}</span>
+          <span>${r.category || 'Uncategorized'}</span>
         </div>
+        ${statusPill}
 
-        ${resource.address ? `
-        <div class="field">
-          <span class="label">Address</span>
-          <div>${resource.address}</div>
-        </div>` : ''}
+        ${r.address ? `<div class="field"><span class="label">Address</span><div>${r.address}</div></div>` : ""}
 
-        ${resource.phone_number ? `
-        <div class="field">
-          <span class="label">Phone</span>
-          <div>${resource.phone_number}</div>
-        </div>` : ''}
+        ${phoneHtml}
+        ${emailHtml}
+        ${linkHtml}
 
-        ${resource.description ? `
-        <div class="field">
-          <span class="label">Description</span>
-          <div>${resource.description}</div>
-        </div>` : ''}
+        ${r.description ? `<div class="field"><span class="label">Description</span><div>${r.description}</div></div>` : ""}
+
+        ${restrHtml}
+        ${daysHtml}
+        ${notesHtml}
+        ${metricsHtml}
 
         <a class="link-btn" href="${gmaps}" target="_blank" rel="noopener noreferrer">
           Open in Google Maps
@@ -282,11 +349,10 @@
     }
 
     sidebarCloseBtn.addEventListener('click', closeSidebar);
-    // Close when clicking empty map space
     map.on('click', closeSidebar);
-    // Close on Escape
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSidebar(); });
 
+    // ----- Markers + filters -----
     function addMarkers(data) {
       markerLayer.clearLayers();
       const bounds = [];
@@ -295,8 +361,6 @@
         if (typeof r.lat !== "number" || typeof r.lng !== "number") return;
 
         const color = colorForCategory(r.category);
-
-        // Custom colored pin icon (SVG)
         const icon = L.divIcon({
           className: "custom-pin",
           html: `
@@ -309,35 +373,29 @@
         });
 
         const marker = L.marker([r.lat, r.lng], { icon });
-
-        // Instead of bindPopup, open sidebar on click
         marker.on('click', () => openSidebar(r));
-
         marker.addTo(markerLayer);
         bounds.push([r.lat, r.lng]);
       });
 
+      updateLegend(data);
+
       if (bounds.length) {
         map.fitBounds(bounds, { padding: [30, 30] });
       } else {
-        map.setView([39.5, -98.35], 4);
+        map.setView([39.2904, -76.6122], 11);
       }
     }
 
-    // Initial render
-    addMarkers(resources);
-
-    // Filters
     const searchInput = document.getElementById("searchInput");
-    const categoryFilter = document.getElementById("categoryFilter");
     const resetBtn = document.getElementById("resetBtn");
 
     function applyFilters() {
       const q = (searchInput.value || "").toLowerCase().trim();
-      const cat = categoryFilter.value;
+      const useAllCats = activeCategories.size === 0;
 
       const filtered = resources.filter(r => {
-        const inCat = !cat || r.category === cat;
+        const inCat = useAllCats || activeCategories.has(r.category);
         const text = `${r.name || ""} ${r.address || ""}`.toLowerCase();
         const matches = !q || text.includes(q);
         return inCat && matches;
@@ -348,13 +406,17 @@
     }
 
     searchInput.addEventListener("input", applyFilters);
-    categoryFilter.addEventListener("change", applyFilters);
     resetBtn.addEventListener("click", () => {
       searchInput.value = "";
-      categoryFilter.value = "";
+      activeCategories.clear();
+      updatePillStates();
       closeSidebar();
       addMarkers(resources);
     });
+
+    // Initial state: "All" categories, all markers visible
+    updatePillStates();
+    addMarkers(resources);
   </script>
 </body>
 </html>

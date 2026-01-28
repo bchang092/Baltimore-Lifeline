@@ -7,7 +7,7 @@ from django.shortcuts import render
 
 
 # Path to your Excel file:  BmoreLine/input_data/1109 Upload_geocoded.xlsx
-XLSX_PATH = Path(settings.BASE_DIR) /"input_data" / "1109 Upload_geocoded.xlsx"
+XLSX_PATH = Path(settings.BASE_DIR) /"input_data" / "01282025 Most Updated Sheet_geocoded.xlsx"
 
 
 def _to_float(x):
@@ -57,6 +57,9 @@ def _load_resources_from_xlsx():
         "bad_latlng": 0,
         "errors": [],
         "sample_row": {},
+        "category_header": None,
+        "category_header_checked": False,
+        "consolidated_categories": [],
     }
 
     resources = []
@@ -80,6 +83,7 @@ def _load_resources_from_xlsx():
         header_row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True))
         headers = [h or "" for h in header_row]
         diag["headers"] = headers
+        print("Detected headers:", headers)
 
         def norm(s):
             return " ".join(str(s).strip().lower().split()) if s is not None else ""
@@ -96,6 +100,12 @@ def _load_resources_from_xlsx():
                         return val
             return default
 
+        def first_matching_header(*names):
+            for n in names:
+                if norm(n) in header_map:
+                    return n
+            return None
+
         def to_bool_flag(v):
             if v is None:
                 return None
@@ -106,14 +116,45 @@ def _load_resources_from_xlsx():
                 return False
             return None  # unknown / not filled
 
+        category_header = first_matching_header(
+            "Category of Help",
+            "Cateogry of Help",
+            "Cateogry of Help (Original)",
+            "Category",
+        )
+        if category_header:
+            diag["category_header"] = category_header
+            print("Category column selected:", category_header)
+        else:
+            print("Category column selected:", False)
+
+        consolidated_categories = set()
+
         for row in ws.iter_rows(min_row=2, values_only=True):
             name = str(grab(row, "Name of Service", "Name", default="")).strip()
             address = str(grab(row, "Address", default="")).strip()
             phone = str(grab(row, "Phone Number", "Phone", default="")).strip()
             email = str(grab(row, "Email", default="")).strip()
             category = str(
-                grab(row, "Cateogry of Help", "Category of Help", "Category", default="")
+                grab(
+                    row,
+                    "Category of Help",
+                    "Cateogry of Help",
+                    "Cateogry of Help (Original)",
+                    "Category",
+                    default="",
+                )
             ).strip() or "Uncategorized"
+            consolidated_value = str(
+                grab(
+                    row,
+                    "Consolidated Category",
+                    "Consolidated Tag Category",
+                    default="",
+                )
+            ).strip()
+            if consolidated_value:
+                consolidated_categories.add(consolidated_value)
             desc = str(grab(row, "Description", default="")).strip()
             restrictions = str(grab(row, "Restrictions of Service", default="")).strip()
             days = str(grab(row, "Days of Service", default="")).strip()
@@ -174,6 +215,7 @@ def _load_resources_from_xlsx():
             resources.append(res)
 
         diag["parsed_rows"] = len(resources)
+        diag["consolidated_categories"] = sorted(consolidated_categories)
         if resources:
             diag["sample_row"] = resources[0]
 
@@ -186,6 +228,9 @@ def _load_resources_from_xlsx():
 def resources_map(request):
     """Main map view – loads data from Excel and passes it into the template."""
     resources, diag = _load_resources_from_xlsx()
+    categories = sorted({r.get("category") for r in resources if r.get("category")})
+    print("Categories passed to template:", categories)
+    consolidated_categories = diag.get("consolidated_categories", [])
 
     # Quick debug view: /resources_map/?debug=1
     if request.GET.get("debug") == "1":
@@ -203,7 +248,11 @@ def resources_map(request):
         )
 
     # Normal map render
-    return render(request, "map_home.html", {"resources": resources})
+    return render(
+        request,
+        "map_home.html",
+        {"resources": resources, "consolidated_categories": consolidated_categories},
+    )
 
 
 def home_page(request):

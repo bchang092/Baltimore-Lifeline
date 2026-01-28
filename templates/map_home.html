@@ -32,11 +32,18 @@
     }
     #map { height: 100vh; width: 100%; }
 
+    /* Main toolbar */
     .map-toolbar {
-      position: absolute; z-index: 1000; top: 10px; left: 10px;
-      background: rgba(17, 24, 39, 0.92); backdrop-filter: saturate(140%) blur(4px);
-      padding: 10px 12px; border-radius: 12px; box-shadow: 0 8px 24px var(--shadow);
+      position: absolute; z-index: 1000; top: 54px; left: 10px;
+      background: rgba(17, 24, 39, 0.94); backdrop-filter: saturate(140%) blur(4px);
+      padding: 8px 10px 10px; border-radius: 12px; box-shadow: 0 8px 24px var(--shadow);
       border: 1px solid var(--border); max-width: min(90vw, 820px); color: var(--text);
+      transition: transform .22s ease, opacity .22s ease;
+    }
+    .map-toolbar.toolbar-hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-12px);
     }
     .map-toolbar input, .map-toolbar button {
       font-size: 14px; padding: 8px 10px; margin-right: 6px; margin-top: 6px;
@@ -72,6 +79,38 @@
       box-shadow: 0 0 0 1px rgba(56,189,248,0.6) inset;
     }
 
+    /* Floating Filters button (mobile only) */
+    .filter-toggle {
+      position: absolute;
+      z-index: 1001;
+      top: 10px;
+      left: 10px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,0.96);
+      color: var(--text);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+    }
+    .filter-toggle span {
+      font-weight: 600;
+    }
+    .filter-toggle-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+    .filter-toggle.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56,189,248,0.6) inset, 0 8px 20px rgba(56,189,248,0.35);
+      background: rgba(15,23,42,0.98);
+    }
+
     .leaflet-control-zoom a {
       background: #0e1524; color: var(--text); border: 1px solid var(--border);
       box-shadow: 0 4px 12px var(--shadow);
@@ -98,7 +137,7 @@
     .sidebar-body { padding: 14px 16px 18px; overflow-y: auto; }
 
     .sidebar a {
-      color: #7dd3fc;              /* light blue links */
+      color: #7dd3fc;
     }
     .sidebar a:hover {
       color: #bae6fd;
@@ -114,11 +153,39 @@
       box-shadow: 0 6px 16px rgba(56,189,248,0.25), 0 4px 10px rgba(16,185,129,0.20); }
 
     @media (max-width: 640px) {
-      .map-toolbar { left: 8px; right: 8px; max-width: calc(100vw - 16px); }
+      .map-toolbar {
+        max-width: calc(100vw - 24px);
+        top: 54px;
+        font-size: 13px;
+      }
+      .map-toolbar input {
+        width: calc(100% - 96px); /* leave space for Reset button */
+        box-sizing: border-box;
+      }
+    }
+
+    @media (min-width: 641px) {
+      .filter-toggle {
+        display: none;   /* no floating button on desktop */
+      }
+      .map-toolbar {
+        top: 10px;
+      }
+      .map-toolbar.toolbar-hidden {
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+      }
     }
   </style>
 </head>
 <body>
+
+  <!-- Floating Filters button (mainly for mobile) -->
+  <button id="filterToggle" class="filter-toggle" type="button" aria-label="Toggle filters">
+    <span class="filter-toggle-dot"></span>
+    <span>Filters</span>
+  </button>
 
   <!-- Toolbar -->
   <div class="map-toolbar" role="region" aria-label="Map search and filters">
@@ -144,6 +211,7 @@
 
   <!-- Embed backend data -->
   {{ resources|json_script:"resources-data" }}
+  {{ consolidated_categories|json_script:"consolidated-categories-data" }}
 
   <!-- Leaflet JS -->
   <script
@@ -154,6 +222,9 @@
 
   <script>
     const resources = JSON.parse(document.getElementById("resources-data").textContent);
+    const consolidatedCategories = JSON.parse(
+      document.getElementById("consolidated-categories-data").textContent
+    );
 
     const map = L.map("map", { zoomControl: false });
     L.control.zoom({ position: "topright" }).addTo(map);
@@ -178,7 +249,10 @@
     const activeCategories = new Set(); // empty => All
 
     function renderCategoryTags() {
-      const categories = Array.from(new Set(resources.map(r => r.category).filter(Boolean))).sort();
+      const categories = (consolidatedCategories && consolidatedCategories.length
+        ? consolidatedCategories.slice()
+        : Array.from(new Set(resources.map(r => r.category).filter(Boolean)))
+      ).filter(Boolean).sort();
       const container = document.getElementById("categoryTags");
       container.innerHTML = "";
 
@@ -226,7 +300,6 @@
 
     function toggleCategory(cat) {
       if (cat === "__ALL__") {
-        // Reset to "All" – clear specific selections
         activeCategories.clear();
       } else {
         if (activeCategories.has(cat)) {
@@ -279,13 +352,15 @@
 
       let showLowScoreDetails = false;
 
-      if (hasNumericRating && rating >= 5) {
-        statusPill = pill("Legit ✓", "#22c55e");
-      } else if (hasNumericRating && rating < 5) {
-        statusPill = pill("Not verified", "#f97316");
+      if (hasNumericRating && rating >= 7) {
+        statusPill = pill("Good Reviews", "#22c55e");
+      } else if (hasNumericRating && rating >= 4) {
+        statusPill = pill("Mixed Reviews", "#f59e0b");
+      } else if (hasNumericRating && rating >= 1) {
+        statusPill = pill("Poor Reviews", "#ef4444");
         showLowScoreDetails = true;
       } else {
-        statusPill = pill("Not yet confirmed", "#f59e0b");
+        statusPill = pill("Not yet confirmed", "#9ca3af");
       }
 
       const phoneHtml = r.phone_number
@@ -414,7 +489,29 @@
       addMarkers(resources);
     });
 
-    // Initial state: "All" categories, all markers visible
+    // ----- Mobile filter toggle -----
+    const filterToggle = document.getElementById("filterToggle");
+    const toolbar = document.querySelector(".map-toolbar");
+
+    function syncToolbarVisibility() {
+      if (window.innerWidth <= 640) {
+        const isActive = filterToggle.classList.contains("active");
+        toolbar.classList.toggle("toolbar-hidden", !isActive);
+      } else {
+        toolbar.classList.remove("toolbar-hidden");
+        filterToggle.classList.remove("active");
+      }
+    }
+
+    filterToggle.addEventListener("click", () => {
+      filterToggle.classList.toggle("active");
+      syncToolbarVisibility();
+    });
+
+    window.addEventListener("resize", syncToolbarVisibility);
+    syncToolbarVisibility();
+
+    // Initial state: all categories, all markers visible
     updatePillStates();
     addMarkers(resources);
   </script>

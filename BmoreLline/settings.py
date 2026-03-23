@@ -60,6 +60,9 @@ WSGI_APPLICATION = 'BmoreLline.wsgi.application'
 # Database: prefer DATABASE_URL on Heroku, fall back to sqlite locally
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+
 if DATABASE_URL:
     # On Heroku/production – likely Postgres
     DATABASES = {

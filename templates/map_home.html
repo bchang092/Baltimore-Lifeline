@@ -32,18 +32,43 @@
     }
     #map { height: 100vh; width: 100%; }
 
-    /* Main toolbar */
+    /* Toolbar with collapsible filters */
     .map-toolbar {
-      position: absolute; z-index: 1000; top: 54px; left: 10px;
+      position: absolute; z-index: 1000; top: 10px; left: 10px;
       background: rgba(17, 24, 39, 0.94); backdrop-filter: saturate(140%) blur(4px);
       padding: 8px 10px 10px; border-radius: 12px; box-shadow: 0 8px 24px var(--shadow);
       border: 1px solid var(--border); max-width: min(90vw, 820px); color: var(--text);
-      transition: transform .22s ease, opacity .22s ease;
     }
-    .map-toolbar.toolbar-hidden {
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(-12px);
+    .toolbar-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+    .filter-toggle {
+      background: rgba(15,23,42,0.96);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .filter-hide {
+      background: rgba(15,23,42,0.96);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .filters-panel {
+      margin-top: 8px;
+      display: none;
+    }
+    .filters-panel.open {
+      display: block;
     }
     .map-toolbar input, .map-toolbar button {
       font-size: 14px; padding: 8px 10px; margin-right: 6px; margin-top: 6px;
@@ -56,6 +81,23 @@
       color: #081018; font-weight: 700; border: 0; cursor: pointer;
       box-shadow: 0 6px 16px rgba(56,189,248,0.25), 0 4px 10px rgba(16,185,129,0.20);
     }
+    .home-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      padding: 8px 12px;
+      margin-top: 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,0.96);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .home-link:hover {
+      background: #121a2d;
+    }
     .legend { margin-top: 6px; font-size: 12px; line-height: 1.4; color: #cbd5e1; }
     .legend-item { display: inline-flex; align-items: center; margin-right: 12px; margin-top: 6px; }
     .legend-swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px;
@@ -67,6 +109,17 @@
       gap: 6px;
       margin-top: 6px;
     }
+    .filter-section {
+      margin-top: 10px;
+    }
+    .filter-section-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #cbd5e1;
+      margin: 0 0 6px;
+    }
     .filter-pill {
       cursor: pointer;
       opacity: 0.85;
@@ -77,38 +130,6 @@
       background: rgba(56,189,248,0.14);
       border-color: var(--accent);
       box-shadow: 0 0 0 1px rgba(56,189,248,0.6) inset;
-    }
-
-    /* Floating Filters button (mobile only) */
-    .filter-toggle {
-      position: absolute;
-      z-index: 1001;
-      top: 10px;
-      left: 10px;
-      padding: 7px 12px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(15,23,42,0.96);
-      color: var(--text);
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.4);
-    }
-    .filter-toggle span {
-      font-weight: 600;
-    }
-    .filter-toggle-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--accent);
-    }
-    .filter-toggle.active {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(56,189,248,0.6) inset, 0 8px 20px rgba(56,189,248,0.35);
-      background: rgba(15,23,42,0.98);
     }
 
     .leaflet-control-zoom a {
@@ -153,48 +174,35 @@
       box-shadow: 0 6px 16px rgba(56,189,248,0.25), 0 4px 10px rgba(16,185,129,0.20); }
 
     @media (max-width: 640px) {
-      .map-toolbar {
-        max-width: calc(100vw - 24px);
-        top: 54px;
-        font-size: 13px;
-      }
       .map-toolbar input {
-        width: calc(100% - 96px); /* leave space for Reset button */
+        width: calc(100% - 96px);
         box-sizing: border-box;
-      }
-    }
-
-    @media (min-width: 641px) {
-      .filter-toggle {
-        display: none;   /* no floating button on desktop */
-      }
-      .map-toolbar {
-        top: 10px;
-      }
-      .map-toolbar.toolbar-hidden {
-        opacity: 1;
-        pointer-events: auto;
-        transform: none;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Floating Filters button (mainly for mobile) -->
-  <button id="filterToggle" class="filter-toggle" type="button" aria-label="Toggle filters">
-    <span class="filter-toggle-dot"></span>
-    <span>Filters</span>
-  </button>
-
   <!-- Toolbar -->
   <div class="map-toolbar" role="region" aria-label="Map search and filters">
-    <div>
+    <div class="toolbar-row">
       <input id="searchInput" type="text" placeholder="Search address or name of service" aria-label="Search" />
       <button id="resetBtn" type="button">Reset</button>
+      <button id="filterToggle" class="filter-toggle" type="button" aria-label="Toggle filters">Filters</button>
+      <button id="filterHide" class="filter-hide" type="button" aria-label="Hide filters">Hide</button>
+      <a class="home-link" href="{% url 'homepage' %}">Home</a>
     </div>
-    <div id="categoryTags" class="tag-container" aria-label="Filter by category"></div>
-    <div class="legend" id="legend"></div>
+    <div id="filtersPanel" class="filters-panel">
+      <div class="filter-section">
+        <div class="filter-section-label">Type of Help</div>
+        <div id="categoryTags" class="tag-container" aria-label="Filter by category"></div>
+      </div>
+      <div class="filter-section">
+        <div class="filter-section-label">Reliability</div>
+        <div id="reliabilityTags" class="tag-container" aria-label="Filter by reliability"></div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
   </div>
 
   <!-- Map -->
@@ -235,18 +243,73 @@
 
     const markerLayer = L.layerGroup().addTo(map);
 
-    const PALETTE = ["#1e90ff","#28a745","#ff6b6b","#f59e0b","#a78bfa","#14b8a6","#f472b6","#ef4444","#22c55e","#60a5fa"];
-    const categoryColorMap = new Map();
+    const CATEGORY_COLORS = {
+      "Food & Essential Needs": "#ef4444",
+      "Housing & Shelter": "#2563eb",
+      "Physical & General Health Care": "#14b8a6",
+      "Behavioral Health, Substance Use, & Crisis": "#8b5cf6",
+      "Financial & Access Support": "#f59e0b",
+      "Employment, Training, & Education": "#ec4899",
+      "Youth, Family, & General Support Services": "#22c55e",
+      "Safety & Anti-Violence": "#f97316",
+      "Veteran Services": "#84cc16",
+      "Other / Uncategorized": "#64748b",
+    };
+    const categoryColorMap = new Map(Object.entries(CATEGORY_COLORS));
+    const RELIABILITY_OPTIONS = [
+      { key: "highly-reliable", label: "Highly Reliable", color: "#22c55e" },
+      { key: "reliable", label: "Reliable", color: "#65a30d" },
+      { key: "thin-reviews", label: "Thin Reviews", color: "#0891b2" },
+      { key: "mixed-reviews", label: "Mixed Reviews", color: "#f59e0b" },
+      { key: "low-reliability", label: "Low Reliability", color: "#ef4444" },
+      { key: "not-confirmed", label: "Not yet confirmed", color: "#9ca3af" },
+    ];
+
+    function hashColor(text) {
+      const s = (text || "").toString();
+      let hash = 0;
+      for (let i = 0; i < s.length; i += 1) {
+        hash = ((hash << 5) - hash) + s.charCodeAt(i);
+        hash |= 0;
+      }
+      const hue = Math.abs(hash) % 360;
+      return `hsl(${hue} 72% 52%)`;
+    }
+
     function colorForCategory(cat) {
       if (!cat) return "#6c757d";
       if (!categoryColorMap.has(cat)) {
-        categoryColorMap.set(cat, PALETTE[categoryColorMap.size % PALETTE.length]);
+        categoryColorMap.set(cat, hashColor(cat));
       }
       return categoryColorMap.get(cat);
     }
 
+    function getReliabilityMeta(resource) {
+      const rawRel = (resource.avg_reliability_ratings || resource.reliability || "").toString().trim().toLowerCase();
+      const rating = parseFloat(rawRel);
+      const hasNumericRating = !isNaN(rating);
+
+      if (hasNumericRating && rating >= 8) {
+        return RELIABILITY_OPTIONS[0];
+      }
+      if (hasNumericRating && rating >= 7) {
+        return RELIABILITY_OPTIONS[1];
+      }
+      if (hasNumericRating && rating >= 6) {
+        return RELIABILITY_OPTIONS[2];
+      }
+      if (hasNumericRating && rating >= 4) {
+        return RELIABILITY_OPTIONS[3];
+      }
+      if (hasNumericRating && rating >= 1) {
+        return RELIABILITY_OPTIONS[4];
+      }
+      return RELIABILITY_OPTIONS[5];
+    }
+
     // ----- Category tag filtering -----
     const activeCategories = new Set(); // empty => All
+    const activeReliability = new Set(); // empty => All
 
     function renderCategoryTags() {
       const categories = (consolidatedCategories && consolidatedCategories.length
@@ -262,6 +325,7 @@
       allPill.textContent = "All";
       allPill.className = "pill filter-pill active";
       allPill.dataset.category = "__ALL__";
+      allPill.dataset.group = "category";
       container.appendChild(allPill);
 
       // Category pills
@@ -271,6 +335,9 @@
         btn.textContent = c;
         btn.className = "pill filter-pill";
         btn.dataset.category = c;
+        btn.dataset.group = "category";
+        btn.style.borderColor = colorForCategory(c);
+        btn.style.boxShadow = `0 0 0 1px ${colorForCategory(c)} inset`;
         container.appendChild(btn);
       });
 
@@ -283,19 +350,56 @@
       });
     }
 
-    function updatePillStates() {
-      const allPill = document.querySelector('.filter-pill[data-category="__ALL__"]');
-      const usingAll = activeCategories.size === 0;
+    function renderReliabilityTags() {
+      const container = document.getElementById("reliabilityTags");
+      container.innerHTML = "";
+
+      const allPill = document.createElement("button");
+      allPill.type = "button";
+      allPill.textContent = "All";
+      allPill.className = "pill filter-pill active";
+      allPill.dataset.reliability = "__ALL__";
+      allPill.dataset.group = "reliability";
+      container.appendChild(allPill);
+
+      RELIABILITY_OPTIONS.forEach(option => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = option.label;
+        btn.className = "pill filter-pill";
+        btn.dataset.reliability = option.key;
+        btn.dataset.group = "reliability";
+        btn.style.borderColor = option.color;
+        btn.style.boxShadow = `0 0 0 1px ${option.color} inset`;
+        container.appendChild(btn);
+      });
+
+      container.addEventListener("click", (e) => {
+        const pillEl = e.target.closest(".filter-pill");
+        if (!pillEl) return;
+        const key = pillEl.dataset.reliability;
+        toggleReliability(key);
+      });
+    }
+
+    function updateFilterGroupState(group, activeSet) {
+      const allPill = document.querySelector(`.filter-pill[data-group="${group}"][data-${group}="__ALL__"]`);
+      const usingAll = activeSet.size === 0;
 
       if (allPill) {
         allPill.classList.toggle("active", usingAll);
       }
 
-      document.querySelectorAll('.filter-pill').forEach(p => {
-        const cat = p.dataset.category;
-        if (cat === "__ALL__") return;
-        p.classList.toggle("active", activeCategories.has(cat));
+      document.querySelectorAll(`.filter-pill[data-group="${group}"]`).forEach(p => {
+        const key = p.dataset[group];
+        if (key === "__ALL__") return;
+        p.classList.toggle("active", activeSet.has(key));
       });
+    }
+
+    function updatePillStates() {
+      updateFilterGroupState("category", activeCategories);
+      updateFilterGroupState("reliability", activeReliability);
     }
 
     function toggleCategory(cat) {
@@ -312,7 +416,22 @@
       applyFilters();
     }
 
+    function toggleReliability(key) {
+      if (key === "__ALL__") {
+        activeReliability.clear();
+      } else {
+        if (activeReliability.has(key)) {
+          activeReliability.delete(key);
+        } else {
+          activeReliability.add(key);
+        }
+      }
+      updatePillStates();
+      applyFilters();
+    }
+
     renderCategoryTags();
+    renderReliabilityTags();
 
     function updateLegend(data) {
       const legend = document.getElementById("legend");
@@ -345,44 +464,18 @@
       const catColor = colorForCategory(r.category);
 
       // RELIABILITY / STATUS
-      let statusPill = "";
-      const rawRel = (r.reliability || "").toString().trim().toLowerCase();
-      const rating = parseFloat(rawRel);
-      const hasNumericRating = !isNaN(rating);
-
-      let showLowScoreDetails = false;
-
-      if (hasNumericRating && rating >= 7) {
-        statusPill = pill("Good Reviews", "#22c55e");
-      } else if (hasNumericRating && rating >= 4) {
-        statusPill = pill("Mixed Reviews", "#f59e0b");
-      } else if (hasNumericRating && rating >= 1) {
-        statusPill = pill("Poor Reviews", "#ef4444");
-        showLowScoreDetails = true;
-      } else {
-        statusPill = pill("Not yet confirmed", "#9ca3af");
-      }
+      const reliabilityMeta = getReliabilityMeta(r);
+      const statusPill = pill(reliabilityMeta.label, reliabilityMeta.color);
 
       const phoneHtml = r.phone_number
         ? `<div class="field"><span class="label">Phone</span><div>${r.phone_number}</div></div>`
         : "";
-      const emailHtml = r.email
-        ? `<div class="field"><span class="label">Email</span><div><a href="mailto:${r.email}">${r.email}</a></div></div>`
+      const restrictionsHtml = r.restrictions
+        ? `<div class="field"><span class="label">Service Restrictions</span><div>${r.restrictions}</div></div>`
         : "";
-      const linkHtml = r.link
-        ? `<div class="field"><span class="label">Website</span><div><a href="${r.link}" target="_blank" rel="noopener">${r.link}</a></div></div>`
-        : "";
-      const restrHtml = r.restrictions
-        ? `<div class="field"><span class="label">Restrictions</span><div>${r.restrictions}</div></div>`
-        : "";
-      const daysHtml = r.days
-        ? `<div class="field"><span class="label">Days</span><div>${r.days}</div></div>`
-        : "";
-      const notesHtml = (showLowScoreDetails && r.call_experience)
-        ? `<div class="field"><span class="label">Call experience</span><div>${r.call_experience}</div></div>`
-        : "";
-      const metricsHtml = (showLowScoreDetails && r.metrics)
-        ? `<div class="field"><span class="label">Metrics</span><div>${r.metrics}</div></div>`
+      const reliabilityHtml = `<div class="field"><span class="label">Reliability</span><div>${reliabilityMeta.label}</div></div>`;
+      const condensedReliabilityHtml = r.condensed_reliability_description
+        ? `<div class="field"><span class="label">Condensed Reliability Description</span><div>${r.condensed_reliability_description}</div></div>`
         : "";
 
       sidebarTitleEl.textContent = r.name || "Unnamed resource";
@@ -394,17 +487,11 @@
         ${statusPill}
 
         ${r.address ? `<div class="field"><span class="label">Address</span><div>${r.address}</div></div>` : ""}
-
         ${phoneHtml}
-        ${emailHtml}
-        ${linkHtml}
-
-        ${r.description ? `<div class="field"><span class="label">Description</span><div>${r.description}</div></div>` : ""}
-
-        ${restrHtml}
-        ${daysHtml}
-        ${notesHtml}
-        ${metricsHtml}
+        ${r.description ? `<div class="field"><span class="label">Brief Description</span><div>${r.description}</div></div>` : ""}
+        ${restrictionsHtml}
+        ${reliabilityHtml}
+        ${condensedReliabilityHtml}
 
         <a class="link-btn" href="${gmaps}" target="_blank" rel="noopener noreferrer">
           Open in Google Maps
@@ -468,12 +555,15 @@
     function applyFilters() {
       const q = (searchInput.value || "").toLowerCase().trim();
       const useAllCats = activeCategories.size === 0;
+      const useAllReliability = activeReliability.size === 0;
 
       const filtered = resources.filter(r => {
         const inCat = useAllCats || activeCategories.has(r.category);
+        const reliabilityMeta = getReliabilityMeta(r);
+        const inReliability = useAllReliability || activeReliability.has(reliabilityMeta.key);
         const text = `${r.name || ""} ${r.address || ""}`.toLowerCase();
         const matches = !q || text.includes(q);
-        return inCat && matches;
+        return inCat && inReliability && matches;
       });
 
       closeSidebar();
@@ -484,32 +574,28 @@
     resetBtn.addEventListener("click", () => {
       searchInput.value = "";
       activeCategories.clear();
+      activeReliability.clear();
       updatePillStates();
       closeSidebar();
       addMarkers(resources);
     });
 
-    // ----- Mobile filter toggle -----
+    // ----- Filters toggle -----
     const filterToggle = document.getElementById("filterToggle");
-    const toolbar = document.querySelector(".map-toolbar");
+    const filterHide = document.getElementById("filterHide");
+    const filtersPanel = document.getElementById("filtersPanel");
 
-    function syncToolbarVisibility() {
-      if (window.innerWidth <= 640) {
-        const isActive = filterToggle.classList.contains("active");
-        toolbar.classList.toggle("toolbar-hidden", !isActive);
-      } else {
-        toolbar.classList.remove("toolbar-hidden");
-        filterToggle.classList.remove("active");
-      }
+    function openFilters() {
+      filtersPanel.classList.add("open");
+    }
+    function closeFilters() {
+      filtersPanel.classList.remove("open");
     }
 
     filterToggle.addEventListener("click", () => {
-      filterToggle.classList.toggle("active");
-      syncToolbarVisibility();
+      filtersPanel.classList.toggle("open");
     });
-
-    window.addEventListener("resize", syncToolbarVisibility);
-    syncToolbarVisibility();
+    filterHide.addEventListener("click", closeFilters);
 
     // Initial state: all categories, all markers visible
     updatePillStates();

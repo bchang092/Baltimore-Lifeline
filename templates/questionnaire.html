@@ -1,0 +1,464 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Baltimore Lifeline - Questionnaire</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-2: #0b1220;
+      --panel: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #38bdf8;
+      --accent-2: #10b981;
+      --outline: rgba(255,255,255,0.08);
+      --shadow: rgba(0,0,0,0.35);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: radial-gradient(800px 500px at 10% -10%, rgba(56,189,248,0.18), transparent),
+                  radial-gradient(900px 600px at 110% 10%, rgba(16,185,129,0.18), transparent),
+                  linear-gradient(180deg, var(--bg), var(--bg-2) 70%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    a { color: inherit; text-decoration: none; }
+
+    .container { max-width: 1080px; margin: 0 auto; padding: 24px; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .brand {
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .brand span { color: var(--accent); }
+    .nav-links {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .ghost-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--outline);
+      background: rgba(17,24,39,0.7);
+      color: var(--text);
+      font-size: 0.92rem;
+    }
+
+    .hero {
+      background: rgba(17,24,39,0.86);
+      border: 1px solid var(--outline);
+      border-radius: 18px;
+      padding: 22px 22px 18px;
+      box-shadow: 0 10px 28px var(--shadow);
+      margin-bottom: 18px;
+    }
+    .hero h1 {
+      margin: 0 0 8px 0;
+      font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: 0.3px;
+    }
+    .hero p { margin: 0; color: var(--muted); max-width: 840px; }
+
+    form {
+      display: grid;
+      gap: 16px;
+    }
+
+    .section {
+      background: rgba(17,24,39,0.88);
+      border: 1px solid var(--outline);
+      border-radius: 18px;
+      padding: 18px 18px 12px;
+      box-shadow: 0 8px 22px var(--shadow);
+    }
+    .section h2 {
+      margin: 0 0 10px 0;
+      font-size: clamp(1.2rem, 2.4vw, 1.5rem);
+      letter-spacing: 0.2px;
+    }
+
+    .question {
+      margin-bottom: 14px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(15,23,42,0.6);
+    }
+    .question:last-child { margin-bottom: 0; }
+
+    .q-title {
+      font-weight: 700;
+      margin: 0 0 8px 0;
+    }
+    .options {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(17,24,39,0.6);
+    }
+    .option input { accent-color: var(--accent); }
+
+    .free-text {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(15,23,42,0.8);
+      color: var(--text);
+    }
+
+    .submit-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 12px 0 30px;
+    }
+    .submit-btn {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 18px 36px;
+      border-radius: 14px;
+      border: 0;
+      cursor: pointer;
+      color: #0b1220;
+      font-weight: 800;
+      font-size: clamp(1.1rem, 2.6vw, 1.35rem);
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 12px 26px rgba(16,185,129,0.25), 0 6px 14px rgba(56,189,248,0.25);
+    }
+    .submit-btn span { font-weight: 600; font-size: 0.95rem; color: rgba(8,16,24,0.75); }
+
+    @media (max-width: 720px) {
+      .options { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="brand">Baltimore <span>Lifeline</span></div>
+      <div class="nav-links">
+        <a class="ghost-btn" href="{% url 'homepage' %}">Home</a>
+        <a class="ghost-btn" href="{% url 'resources_map' %}">Open Map</a>
+      </div>
+    </div>
+
+    <div class="hero">
+      <h1>Master Questionnaire</h1>
+      <p>Answer what you can. This helps match you to services faster. You can skip anything you're not comfortable sharing.</p>
+    </div>
+
+    <form method="post" action="{% url 'questionnaire' %}">
+      {% csrf_token %}
+      <section class="section">
+        <h2>Section A - Safety & Immediate Needs</h2>
+        <div class="question">
+          <div class="q-title">A1) Do you feel safe where you're staying tonight?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="A1_safe_tonight" value="yes"> Yes</label>
+            <label class="option"><input type="radio" name="A1_safe_tonight" value="sometimes"> Not sure / Sometimes</label>
+            <label class="option"><input type="radio" name="A1_safe_tonight" value="no"> No</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="q-title">A2) Do you have a place to sleep tonight?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="A2_sleep_tonight" value="yes"> Yes</label>
+            <label class="option"><input type="radio" name="A2_sleep_tonight" value="not_sure"> Not sure / might lose it</label>
+            <label class="option"><input type="radio" name="A2_sleep_tonight" value="no"> No</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="q-title">A3) Are you currently experiencing threats, violence, or abuse?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="A3_threats_abuse" value="yes"> Yes</label>
+            <label class="option"><input type="radio" name="A3_threats_abuse" value="no"> No</label>
+            <label class="option"><input type="radio" name="A3_threats_abuse" value="prefer_not"> Prefer not to say</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="q-title">A4) What do you need help with today? (check all that apply)</div>
+          <div class="options">
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="food"> Food</label>
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="sleep"> A place to sleep</label>
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="rent_utilities"> Help paying rent/utilities</label>
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="clothes_hygiene"> Clothes or hygiene items</label>
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="phone_internet"> Phone or internet access</label>
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="transportation"> Transportation</label>
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="medical_mental"> Medical or mental health care</label>
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="medicaid_insurance"> Help with Medicaid / Medicare / insurance</label>
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="benefits_money"> Help with benefits or money</label>
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="childcare_family"> Childcare or family support</label>
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="disability_long_term"> Disability or long-term care support</label>
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="education_job"> Education or job help</label>
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="legal"> Legal help</label>
+            <label class="option"><input type="checkbox" name="A4_needs_today" value="other"> Other</label>
+          </div>
+          <input class="free-text" type="text" name="A4_other_text" placeholder="Other: ________" />
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Section B - Housing & Utilities</h2>
+        <div class="question">
+          <div class="q-title">B1) Where are you staying right now?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="B1_where_staying" value="own_place"> My own place</label>
+            <label class="option"><input type="radio" name="B1_where_staying" value="friends_family"> With friends/family (temporary)</label>
+            <label class="option"><input type="radio" name="B1_where_staying" value="shelter"> Shelter</label>
+            <label class="option"><input type="radio" name="B1_where_staying" value="hotel_motel"> Hotel/motel</label>
+            <label class="option"><input type="radio" name="B1_where_staying" value="outside"> Outside</label>
+            <label class="option"><input type="radio" name="B1_where_staying" value="car"> Car</label>
+            <label class="option"><input type="radio" name="B1_where_staying" value="abandoned"> Abandoned building</label>
+            <label class="option"><input type="radio" name="B1_where_staying" value="other"> Other</label>
+          </div>
+          <input class="free-text" type="text" name="B1_other_text" placeholder="Other: _______" />
+        </div>
+        <div class="question">
+          <div class="q-title">B2) Are you worried about losing your housing in the next 30 days?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="B2_losing_housing" value="yes"> Yes</label>
+            <label class="option"><input type="radio" name="B2_losing_housing" value="no"> No</label>
+            <label class="option"><input type="radio" name="B2_losing_housing" value="not_sure"> Not sure</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="q-title">B3) Are any utilities shut off or at risk? (check all that apply)</div>
+          <div class="options">
+            <label class="option"><input type="checkbox" name="B3_utilities" value="electric"> Electric</label>
+            <label class="option"><input type="checkbox" name="B3_utilities" value="gas"> Gas</label>
+            <label class="option"><input type="checkbox" name="B3_utilities" value="water"> Water</label>
+            <label class="option"><input type="checkbox" name="B3_utilities" value="internet_phone"> Internet / Phone</label>
+            <label class="option"><input type="checkbox" name="B3_utilities" value="none"> None</label>
+            <label class="option"><input type="checkbox" name="B3_utilities" value="not_sure"> Not sure</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Section C - Food & Daily Essentials</h2>
+        <div class="question">
+          <div class="q-title">C1) Do you have enough food for the next 2-3 days?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="C1_food_2_3_days" value="yes"> Yes</label>
+            <label class="option"><input type="radio" name="C1_food_2_3_days" value="sometimes"> Sometimes</label>
+            <label class="option"><input type="radio" name="C1_food_2_3_days" value="no"> No</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="q-title">C2) Do you need: (check all that apply)</div>
+          <div class="options">
+            <label class="option"><input type="checkbox" name="C2_needs" value="hot_meals"> Hot meals today</label>
+            <label class="option"><input type="checkbox" name="C2_needs" value="groceries"> Groceries</label>
+            <label class="option"><input type="checkbox" name="C2_needs" value="baby_food"> Baby food/formula</label>
+            <label class="option"><input type="checkbox" name="C2_needs" value="hygiene"> Hygiene supplies</label>
+            <label class="option"><input type="checkbox" name="C2_needs" value="clothing_everyday"> Clothing (everyday)</label>
+            <label class="option"><input type="checkbox" name="C2_needs" value="clothing_work"> Clothing (work/interview)</label>
+            <label class="option"><input type="checkbox" name="C2_needs" value="winter_clothing"> Winter clothing / blankets</label>
+            <label class="option"><input type="checkbox" name="C2_needs" value="other"> Other</label>
+          </div>
+          <input class="free-text" type="text" name="C2_other_text" placeholder="Other: _______" />
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Section D - Money, Benefits & Insurance</h2>
+        <div class="question">
+          <div class="q-title">D1) Do you currently have a source of income?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="D1_income" value="yes"> Yes</label>
+            <label class="option"><input type="radio" name="D1_income" value="no"> No</label>
+            <label class="option"><input type="radio" name="D1_income" value="sometimes"> Sometimes / irregular</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="q-title">D2) In the past 3 months, have you had trouble paying for: (check all)</div>
+          <div class="options">
+            <label class="option"><input type="checkbox" name="D2_trouble_paying" value="rent_mortgage"> Rent/mortgage</label>
+            <label class="option"><input type="checkbox" name="D2_trouble_paying" value="utilities"> Utilities</label>
+            <label class="option"><input type="checkbox" name="D2_trouble_paying" value="food"> Food</label>
+            <label class="option"><input type="checkbox" name="D2_trouble_paying" value="medical"> Medical care or prescriptions</label>
+            <label class="option"><input type="checkbox" name="D2_trouble_paying" value="transportation"> Transportation</label>
+            <label class="option"><input type="checkbox" name="D2_trouble_paying" value="childcare"> Childcare</label>
+            <label class="option"><input type="checkbox" name="D2_trouble_paying" value="none"> None of these</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="q-title">D3) Do you have any of these benefits? (check all that apply)</div>
+          <div class="options">
+            <label class="option"><input type="checkbox" name="D3_benefits" value="snap"> SNAP / Food stamps</label>
+            <label class="option"><input type="checkbox" name="D3_benefits" value="tca"> Cash assistance (TCA/TANF)</label>
+            <label class="option"><input type="checkbox" name="D3_benefits" value="ssi"> SSI</label>
+            <label class="option"><input type="checkbox" name="D3_benefits" value="ssdi"> SSDI</label>
+            <label class="option"><input type="checkbox" name="D3_benefits" value="unemployment"> Unemployment</label>
+            <label class="option"><input type="checkbox" name="D3_benefits" value="medicare"> Medicare</label>
+            <label class="option"><input type="checkbox" name="D3_benefits" value="medicaid"> Medicaid</label>
+            <label class="option"><input type="checkbox" name="D3_benefits" value="none"> None</label>
+            <label class="option"><input type="checkbox" name="D3_benefits" value="not_sure"> Not sure</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="q-title">D4) Did you recently lose Medicaid or Medicare coverage?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="D4_lost_medicaid" value="yes"> Yes</label>
+            <label class="option"><input type="radio" name="D4_lost_medicaid" value="no"> No</label>
+            <label class="option"><input type="radio" name="D4_lost_medicaid" value="not_sure"> Not sure</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="q-title">D5) Do you need help applying for or understanding benefits? (check all)</div>
+          <div class="options">
+            <label class="option"><input type="checkbox" name="D5_help_applying" value="medicaid"> Medicaid</label>
+            <label class="option"><input type="checkbox" name="D5_help_applying" value="medicare"> Medicare</label>
+            <label class="option"><input type="checkbox" name="D5_help_applying" value="snap"> SNAP</label>
+            <label class="option"><input type="checkbox" name="D5_help_applying" value="ssi_ssdi"> SSI/SSDI</label>
+            <label class="option"><input type="checkbox" name="D5_help_applying" value="unemployment"> Unemployment</label>
+            <label class="option"><input type="checkbox" name="D5_help_applying" value="childcare"> Childcare benefits</label>
+            <label class="option"><input type="checkbox" name="D5_help_applying" value="not_sure"> Not sure which ones I qualify for</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Section E - Healthcare & Mental Health</h2>
+        <div class="question">
+          <div class="q-title">E1) Do you need help with: (check all)</div>
+          <div class="options">
+            <label class="option"><input type="checkbox" name="E1_health_needs" value="primary_care"> Primary care</label>
+            <label class="option"><input type="checkbox" name="E1_health_needs" value="mental_health"> Mental health counseling</label>
+            <label class="option"><input type="checkbox" name="E1_health_needs" value="substance_use"> Substance use treatment</label>
+            <label class="option"><input type="checkbox" name="E1_health_needs" value="prescriptions"> Prescriptions/medications</label>
+            <label class="option"><input type="checkbox" name="E1_health_needs" value="dental"> Dental care</label>
+            <label class="option"><input type="checkbox" name="E1_health_needs" value="vision"> Vision care</label>
+            <label class="option"><input type="checkbox" name="E1_health_needs" value="equipment"> Medical equipment</label>
+            <label class="option"><input type="checkbox" name="E1_health_needs" value="prenatal"> Prenatal/postpartum care</label>
+            <label class="option"><input type="checkbox" name="E1_health_needs" value="none"> None</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="q-title">E2) Do you have a doctor/clinic you can go to?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="E2_have_doctor" value="yes"> Yes</label>
+            <label class="option"><input type="radio" name="E2_have_doctor" value="no"> No</label>
+            <label class="option"><input type="radio" name="E2_have_doctor" value="not_sure"> Not sure</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Section F - Transportation & Phone</h2>
+        <div class="question">
+          <div class="q-title">F1) How do you usually get around?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="F1_transport" value="bus"> Bus</label>
+            <label class="option"><input type="radio" name="F1_transport" value="walk"> Walk</label>
+            <label class="option"><input type="radio" name="F1_transport" value="drive"> Drive</label>
+            <label class="option"><input type="radio" name="F1_transport" value="rides"> Rides from others</label>
+            <label class="option"><input type="radio" name="F1_transport" value="paratransit"> Paratransit</label>
+            <label class="option"><input type="radio" name="F1_transport" value="no_reliable"> No reliable way</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="q-title">F2) Do you have a working phone?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="F2_phone" value="yes"> Yes</label>
+            <label class="option"><input type="radio" name="F2_phone" value="sometimes"> Sometimes (data/minutes run out)</label>
+            <label class="option"><input type="radio" name="F2_phone" value="no"> No</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Section G - Documents & Barriers</h2>
+        <div class="question">
+          <div class="q-title">G1) Do you have these documents? (check all that apply)</div>
+          <div class="options">
+            <label class="option"><input type="checkbox" name="G1_documents" value="id"> State ID/Driver's license</label>
+            <label class="option"><input type="checkbox" name="G1_documents" value="ssn"> Social Security card</label>
+            <label class="option"><input type="checkbox" name="G1_documents" value="birth_cert"> Birth certificate</label>
+            <label class="option"><input type="checkbox" name="G1_documents" value="none"> None of these</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="q-title">G2) Which barriers make it harder to get help? (check all)</div>
+          <div class="options">
+            <label class="option"><input type="checkbox" name="G2_barriers" value="immigration"> Immigration status concerns</label>
+            <label class="option"><input type="checkbox" name="G2_barriers" value="disability"> Disability or health condition</label>
+            <label class="option"><input type="checkbox" name="G2_barriers" value="criminal_record"> Criminal record</label>
+            <label class="option"><input type="checkbox" name="G2_barriers" value="limited_english"> Limited reading or English</label>
+            <label class="option"><input type="checkbox" name="G2_barriers" value="no_phone_internet"> No phone or internet</label>
+            <label class="option"><input type="checkbox" name="G2_barriers" value="none"> None</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Section H - Household Structure</h2>
+        <div class="question">
+          <div class="q-title">H1) Who lives with you or depends on you?</div>
+          <div class="options">
+            <label class="option"><input type="checkbox" name="H1_household" value="just_me"> Just me</label>
+            <label class="option"><input type="checkbox" name="H1_household" value="partner"> Partner</label>
+            <label class="option"><input type="checkbox" name="H1_household" value="children"> Children</label>
+            <label class="option"><input type="checkbox" name="H1_household" value="older_adult"> Older adult</label>
+            <label class="option"><input type="checkbox" name="H1_household" value="disability"> Person with disability</label>
+            <label class="option"><input type="checkbox" name="H1_household" value="other"> Other</label>
+          </div>
+          <input class="free-text" type="text" name="H1_other_text" placeholder="Other: _______" />
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Section I - Output Preferences</h2>
+        <div class="question">
+          <div class="q-title">I1) How should we show your plan?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="I1_output_preference" value="on_screen"> On screen</label>
+            <label class="option"><input type="radio" name="I1_output_preference" value="text"> Text to phone</label>
+            <label class="option"><input type="radio" name="I1_output_preference" value="email"> Email</label>
+            <label class="option"><input type="radio" name="I1_output_preference" value="printable"> Printable checklist</label>
+            <label class="option"><input type="radio" name="I1_output_preference" value="helper"> I'd like a helper to go over it with me</label>
+          </div>
+        </div>
+      </section>
+
+      <div class="submit-wrap">
+        <button class="submit-btn" type="submit">
+          Save My Responses
+          <span>We'll use this to tailor your plan</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

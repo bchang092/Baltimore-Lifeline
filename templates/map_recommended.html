@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Baltimore Lifeline - Recommended Resources</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <style>
+    :root{
+      --bg: #0f172a; --bg-2: #0b1220; --panel: #111827; --text: #e5e7eb;
+      --muted: #9ca3af; --border: rgba(255,255,255,0.08); --shadow: rgba(0,0,0,0.35);
+      --accent: #38bdf8; --accent-2: #10b981; --warning: #f59e0b; --danger: #ef4444;
+    }
+    html, body { height: 100%; margin: 0; }
+    body {
+      height: 100%;
+      background: linear-gradient(180deg, var(--bg), var(--bg-2) 60%, #070b14);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    #map { height: 100vh; width: 100%; }
+
+    .map-header {
+      position: absolute;
+      z-index: 1000;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      background: rgba(17, 24, 39, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: 0 8px 24px var(--shadow);
+    }
+    .map-header h1 {
+      margin: 0;
+      font-size: clamp(1.1rem, 3vw, 1.4rem);
+    }
+    .map-header .count {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .map-header .spacer { flex: 1; }
+    .map-header a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+
+    .sidebar {
+      position: absolute;
+      right: 16px;
+      top: 86px;
+      bottom: 16px;
+      width: min(360px, 88vw);
+      background: rgba(17,24,39,0.95);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 10px 26px var(--shadow);
+      transform: translateX(110%);
+      transition: transform .25s ease;
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 14px 0;
+    }
+    .sidebar-title { margin: 0; font-size: 1.1rem; }
+    .sidebar-close {
+      background: transparent; border: 1px solid var(--border); color: var(--text);
+      padding: 6px 10px; border-radius: 999px; cursor: pointer;
+    }
+    .sidebar-body {
+      padding: 14px;
+      overflow: auto;
+    }
+
+    .field { margin-bottom: 10px; }
+    .label { display: block; color: var(--muted); font-size: 0.8rem; margin-bottom: 2px; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 0.8rem;
+      margin-right: 6px;
+      color: var(--text);
+    }
+    .link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #081018;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .custom-pin { background: transparent; border: 0; }
+
+    @media (max-width: 720px) {
+      .sidebar { top: 110px; right: 10px; left: 10px; width: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="map-header">
+    <h1>Recommended Resources</h1>
+    <span class="count">{{ resources|length }} matches</span>
+    <span class="spacer"></span>
+    <a href="{% url 'questionnaire' %}">Back to Questionnaire</a>
+    <a href="{% url 'resources_map' %}">Full Map</a>
+  </div>
+
+  <div id="map" role="application" aria-label="Recommended resource map"></div>
+
+  <aside id="sidebar" class="sidebar" aria-hidden="true">
+    <div class="sidebar-header">
+      <h3 class="sidebar-title" id="sidebar-title">Details</h3>
+      <button id="sidebar-close" class="sidebar-close" type="button" aria-label="Close details">Close</button>
+    </div>
+    <div class="sidebar-body" id="sidebar-body"></div>
+  </aside>
+
+  {{ resources|json_script:"resources-data" }}
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <script>
+    const resources = JSON.parse(document.getElementById("resources-data").textContent);
+
+    const map = L.map("map", { zoomControl: false });
+    L.control.zoom({ position: "bottomright" }).addTo(map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const markerLayer = L.layerGroup().addTo(map);
+
+    const CATEGORY_COLORS = {
+      "Food & Essential Needs": "#ef4444",
+      "Housing & Shelter": "#2563eb",
+      "Physical & General Health Care": "#14b8a6",
+      "Behavioral Health, Substance Use, & Crisis": "#8b5cf6",
+      "Financial & Access Support": "#f59e0b",
+      "Employment, Training, & Education": "#ec4899",
+      "Youth, Family, & General Support Services": "#22c55e",
+      "Safety & Anti-Violence": "#f97316",
+      "Veteran Services": "#84cc16",
+      "Other / Uncategorized": "#64748b",
+    };
+    const categoryColorMap = new Map(Object.entries(CATEGORY_COLORS));
+    const RELIABILITY_OPTIONS = [
+      { key: "highly-reliable", label: "Highly Reliable", color: "#22c55e" },
+      { key: "reliable", label: "Reliable", color: "#65a30d" },
+      { key: "thin-reviews", label: "Thin Reviews", color: "#0891b2" },
+      { key: "mixed-reviews", label: "Mixed Reviews", color: "#f59e0b" },
+      { key: "low-reliability", label: "Low Reliability", color: "#ef4444" },
+      { key: "not-confirmed", label: "Not yet confirmed", color: "#9ca3af" },
+    ];
+
+    function hashColor(text) {
+      const s = (text || "").toString();
+      let hash = 0;
+      for (let i = 0; i < s.length; i += 1) {
+        hash = ((hash << 5) - hash) + s.charCodeAt(i);
+        hash |= 0;
+      }
+      const hue = Math.abs(hash) % 360;
+      return `hsl(${hue} 72% 52%)`;
+    }
+
+    function colorForCategory(cat) {
+      if (!cat) return "#6c757d";
+      if (!categoryColorMap.has(cat)) {
+        categoryColorMap.set(cat, hashColor(cat));
+      }
+      return categoryColorMap.get(cat);
+    }
+
+    function getReliabilityMeta(resource) {
+      const rawRel = (resource.avg_reliability_ratings || resource.reliability || "").toString().trim().toLowerCase();
+      const rating = parseFloat(rawRel);
+      const hasNumericRating = !isNaN(rating);
+
+      if (hasNumericRating && rating >= 8) {
+        return RELIABILITY_OPTIONS[0];
+      }
+      if (hasNumericRating && rating >= 7) {
+        return RELIABILITY_OPTIONS[1];
+      }
+      if (hasNumericRating && rating >= 6) {
+        return RELIABILITY_OPTIONS[2];
+      }
+      if (hasNumericRating && rating >= 4) {
+        return RELIABILITY_OPTIONS[3];
+      }
+      if (hasNumericRating && rating >= 1) {
+        return RELIABILITY_OPTIONS[4];
+      }
+      return RELIABILITY_OPTIONS[5];
+    }
+
+    const sidebarEl = document.getElementById('sidebar');
+    const sidebarTitleEl = document.getElementById('sidebar-title');
+    const sidebarBodyEl = document.getElementById('sidebar-body');
+    const sidebarCloseBtn = document.getElementById('sidebar-close');
+
+    function pill(text, bg) {
+      return `<span class="pill" style="border-color:${bg}; box-shadow:0 0 0 1px ${bg} inset;">${text}</span>`;
+    }
+
+    function openSidebar(r) {
+      const dest = r.address ? encodeURIComponent(r.address) : `${r.lat},${r.lng}`;
+      const gmaps = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
+
+      const reliabilityMeta = getReliabilityMeta(r);
+      const statusPill = pill(reliabilityMeta.label, reliabilityMeta.color);
+
+      const phoneHtml = r.phone_number
+        ? `<div class="field"><span class="label">Phone</span><div>${r.phone_number}</div></div>`
+        : "";
+      const restrictionsHtml = r.restrictions
+        ? `<div class="field"><span class="label">Service Restrictions</span><div>${r.restrictions}</div></div>`
+        : "";
+      const reliabilityHtml = `<div class="field"><span class="label">Reliability</span><div>${reliabilityMeta.label}</div></div>`;
+      const condensedReliabilityHtml = r.condensed_reliability_description
+        ? `<div class="field"><span class="label">Condensed Reliability Description</span><div>${r.condensed_reliability_description}</div></div>`
+        : "";
+
+      sidebarTitleEl.textContent = r.name || "Unnamed resource";
+      sidebarBodyEl.innerHTML = `
+        ${statusPill}
+        <div class="field"><span class="label">Category</span><div>${r.category || 'Uncategorized'}</div></div>
+        ${r.address ? `<div class="field"><span class="label">Address</span><div>${r.address}</div></div>` : ""}
+        ${phoneHtml}
+        ${r.description ? `<div class="field"><span class="label">Brief Description</span><div>${r.description}</div></div>` : ""}
+        ${restrictionsHtml}
+        ${reliabilityHtml}
+        ${condensedReliabilityHtml}
+        <a class="link-btn" href="${gmaps}" target="_blank" rel="noopener noreferrer">
+          Open in Google Maps
+        </a>
+      `;
+
+      sidebarEl.classList.add('open');
+      sidebarEl.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeSidebar() {
+      sidebarEl.classList.remove('open');
+      sidebarEl.setAttribute('aria-hidden', 'true');
+    }
+
+    sidebarCloseBtn.addEventListener('click', closeSidebar);
+    map.on('click', closeSidebar);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSidebar(); });
+
+    function addMarkers(data) {
+      markerLayer.clearLayers();
+      const bounds = [];
+
+      data.forEach(r => {
+        if (typeof r.lat !== "number" || typeof r.lng !== "number") return;
+
+        const color = colorForCategory(r.category);
+        const icon = L.divIcon({
+          className: "custom-pin",
+          html: `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="24" height="36" aria-hidden="true" focusable="false">
+              <path d="M12 0C5.4 0 0 5.4 0 12c0 7.5 12 24 12 24s12-16.5 12-24c0-6.6-5.4-12-12-12z"
+                    fill="${color}" stroke="white" stroke-width="2"/>
+            </svg>`,
+          iconSize: [24, 36],
+          iconAnchor: [12, 36],
+        });
+
+        const marker = L.marker([r.lat, r.lng], { icon });
+        marker.on('click', () => openSidebar(r));
+        marker.addTo(markerLayer);
+        bounds.push([r.lat, r.lng]);
+      });
+
+      if (bounds.length) {
+        map.fitBounds(bounds, { padding: [30, 30] });
+      } else {
+        map.setView([39.2904, -76.6122], 11);
+      }
+    }
+
+    addMarkers(resources);
+  </script>
+</body>
+</html>

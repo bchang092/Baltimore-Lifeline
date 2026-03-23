@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Baltimore Lifeline - Choose Your Path</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #38bdf8;
+      --accent-2: #10b981;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: linear-gradient(180deg, var(--bg), #111827 60%, #0b1220);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    .container { max-width: 1000px; margin: 0 auto; padding: 24px; }
+    .hero {
+      min-height: 30svh;
+      display: grid;
+      align-items: end;
+      padding: 12px 0 6px;
+    }
+    .hero h1 { margin: 0 0 8px; font-size: clamp(2.2rem, 5vw, 3.2rem); }
+    .hero p { margin: 0; color: var(--muted); font-size: clamp(1rem, 2.2vw, 1.15rem); }
+
+    .cta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(240px, 1fr));
+      gap: 18px;
+      margin-top: 22px;
+    }
+    .cta-card {
+      background: rgba(17,24,39,0.85);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      text-align: left;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.28);
+      display: flex;
+      flex-direction: column;
+    }
+    .cta-card h3 { margin: 0 0 10px 0; font-size: 1.15rem; font-weight: 800; }
+    .cta-card p { margin: 0 0 16px 0; color: #cbd5e1; font-size: 0.98rem; }
+    .cta-card .spacer { flex: 1; }
+    .cta-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #081018;
+      font-weight: 800;
+      text-decoration: none;
+      box-shadow: 0 8px 18px rgba(16,185,129,0.22), 0 4px 10px rgba(56,189,248,0.22);
+      width: 100%;
+    }
+
+    .nav {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .ghost-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .ghost-link:hover { text-decoration: underline; }
+
+    @media (max-width: 760px) {
+      .cta-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <div>
+        <h1>Choose your path</h1>
+        <p>Pick the option that fits you best - browse everything or get guided help.</p>
+        <div class="nav">
+          <a class="ghost-link" href="{% url 'homepage' %}">Home</a>
+          <a class="ghost-link" href="{% url 'about' %}">About us</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-grid" aria-label="Primary actions">
+      <div class="cta-card">
+        <h3>Browse the Map</h3>
+        <p>See all nearby resources instantly.</p>
+        <span class="spacer"></span>
+        <a class="cta-link" href="{% url 'resources_map' %}">Open Map</a>
+      </div>
+      <div class="cta-card">
+        <h3>Get Guided Help</h3>
+        <p>Answer a few questions and we'll find help for you.</p>
+        <span class="spacer"></span>
+        <a class="cta-link" href="{% url 'questionnaire' %}">Start Questionnaire</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

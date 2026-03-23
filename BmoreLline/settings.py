@@ -7,7 +7,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-insecure-key")  # set on Heroku!
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.herokuapp.com']
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    '.herokuapp.com',
+    'baltimorelifeline.site',
+    'www.baltimorelifeline.site',
+]
 #test
 INSTALLED_APPS = [
     'django.contrib.admin',

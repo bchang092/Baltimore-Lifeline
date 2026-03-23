@@ -36,7 +36,7 @@
     /* Hero */
     .hero {
       /* Use svh/dvh for mobile browser chrome accuracy */
-      min-height: 80svh;
+      min-height: 100svh;
       display: grid;
       place-items: center;
       text-align: center;
@@ -64,40 +64,129 @@
       animation: fadeUp 800ms ease forwards 240ms;
     }
 
-    /* Big CTA button */
-    .cta {
-        display: inline-flex;          /* inline-flex keeps it naturally centered inside container */
-        align-items: center;           /* vertical centering */
-        justify-content: center;       /* keep text+arrow centered */
-        gap: 10px;
-
-        padding: 18px 28px;
-        font-size: clamp(1.05rem, 2.5vw, 1.25rem);
-        font-weight: 700;
-        color: #0b1220;
-        background: linear-gradient(135deg, var(--accent), var(--accent-2));
-        border: 0;
-        border-radius: 14px;
-        cursor: pointer;
-        text-decoration: none;
-        box-shadow: 0 10px 24px rgba(16,185,129,0.25), 0 4px 10px rgba(56,189,248,0.25);
-        transform: translateY(12px);
-        opacity: 0;
-        animation: fadeUp 800ms ease forwards 360ms;
-
-        width: 100%;
-        max-width: 320px;              /* narrower so it doesn’t look “off center” */
-        min-height: 56px;              /* comfy touch target */
-        text-align: center;
+    /* CTA cards */
+    .cta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(240px, 1fr));
+      gap: 18px;
+      margin-top: 26px;
+      width: min(860px, 100%);
+      margin-left: auto;
+      margin-right: auto;
     }
-    .cta:hover { filter: brightness(1.05); transform: translateY(10px); }
-    .cta .arrow {
-        flex-shrink: 0;                /* arrow stays the same size */
-        display: block;
-        transition: transform .2s ease;
+    .cta-card {
+      background: rgba(17,24,39,0.85);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      text-align: left;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.28);
+      display: flex;
+      flex-direction: column;
+      transform: translateY(12px);
+      opacity: 0;
+      animation: fadeUp 800ms ease forwards 360ms;
     }
-    .cta:hover .arrow { transform: translateX(4px); }
-    .cta:active { transform: translateY(12px) scale(0.99); }
+    .cta-card h3 {
+      margin: 0 0 10px 0;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(56,189,248,0.12);
+      border: 1px solid rgba(56,189,248,0.28);
+      color: #bae6fd;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .cta-card p {
+      margin: 0 0 16px 0;
+      color: #cbd5e1;
+      font-size: 0.98rem;
+    }
+    .cta-card .spacer {
+      flex: 1;
+    }
+    .cta-visual {
+      flex: 1;
+      min-height: 150px;
+      display: grid;
+      place-items: center;
+      margin: 6px 0 18px;
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,0.14), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.05);
+      overflow: hidden;
+    }
+    .cta-visual svg {
+      width: min(220px, 72%);
+      height: auto;
+      filter: drop-shadow(0 14px 28px rgba(0,0,0,0.28));
+    }
+    .cta-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #081018;
+      font-weight: 800;
+      text-decoration: none;
+      box-shadow: 0 8px 18px rgba(16,185,129,0.22), 0 4px 10px rgba(56,189,248,0.22);
+      width: 100%;
+      justify-content: center;
+    }
+    .cta-link:hover { filter: brightness(1.05); }
+    .cta-link .arrow {
+      display: inline-block;
+      transition: transform .2s ease;
+    }
+    .cta-link:hover .arrow { transform: translateX(4px); }
+    .cta-status {
+      width: 100%;
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #dbe4ef;
+    }
+    .cta-status-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 6px 0;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fef3c7;
+    }
+    .cta-status p {
+      margin: 0;
+      color: #cbd5e1;
+      font-size: 0.95rem;
+    }
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #f59e0b;
+      box-shadow: 0 0 0 4px rgba(245,158,11,0.18);
+      flex: 0 0 auto;
+    }
+
+    @media (max-width: 760px) {
+      .cta-grid { grid-template-columns: 1fr; }
+    }
 
     /* Subtle floating shapes */
     .orb {
@@ -116,6 +205,9 @@
       /* slightly tighter on phones */
       padding: 56px 16px 96px;
       background: linear-gradient(180deg, transparent, rgba(255,255,255,0.02));
+    }
+    #about {
+      margin-top: 40px;
     }
     .about h2 {
       font-size: clamp(1.8rem, 3.6vw, 2.4rem);
@@ -152,6 +244,21 @@
     .card h3 { margin: 0 0 8px 0; font-size: 1.05rem; }
     .card p { margin: 0; color: #a3a9b6; font-size: .98rem; }
 
+    .disclaimer-note {
+      margin: 28px auto 0;
+      max-width: 900px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: rgba(229,231,235,0.82);
+      font-size: 0.95rem;
+      line-height: 1.55;
+    }
+    .disclaimer-note strong {
+      color: rgba(229,231,235,0.94);
+    }
+
     /* Footer */
     footer {
       color: #9aa3b2;
@@ -173,13 +280,24 @@
 
     /* Reduced motion support */
     @media (prefers-reduced-motion: reduce) {
-      .cta, .hero h1, .hero p, .card, .orb { animation: none !important; transform: none !important; }
+      .hero h1, .hero p, .card, .orb { animation: none !important; transform: none !important; }
     }
 
-    /* Anchor link styling */
+    /* Hero links */
+    .hero-links {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
     .ghost-link {
-      display: inline-block; margin-top: 18px;
-      color: var(--accent); text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
     }
     .ghost-link:hover { text-decoration: underline; }
   </style>
@@ -199,16 +317,65 @@
           fast, clear, and mobile-friendly.
         </p>
 
-        <!-- Big CTA to map -->
-        <a class="cta" href="{% url 'resources_map' %}" aria-label="Open the resources map">
-          Open the Map
-          <svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M5 12h12M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </a>
+        <div class="hero-links">
+          <a class="ghost-link" href="#actions">See more ↓</a>
+          <a class="ghost-link" href="#about">Learn more about us</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        <div>
-          <a class="ghost-link" href="#about">Learn more ↓</a>
+  <!-- ACTIONS -->
+  <section id="actions" class="about">
+    <div class="container">
+      <h2 class="reveal">Choose your path</h2>
+      <p class="reveal">Pick the option that fits you best - browse everything or get guided help.</p>
+      <div class="cta-grid" aria-label="Primary actions">
+        <div class="cta-card">
+          <h3>Browse the Map</h3>
+          <p>See all nearby resources instantly.</p>
+          <div class="cta-visual" aria-hidden="true">
+            <svg viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M32 44L88 24L152 42L208 22V136L152 156L88 138L32 158V44Z" fill="rgba(15,23,42,0.92)" stroke="rgba(148,163,184,0.45)" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M88 24V138" stroke="rgba(148,163,184,0.32)" stroke-width="3"/>
+              <path d="M152 42V156" stroke="rgba(148,163,184,0.32)" stroke-width="3"/>
+              <path d="M49 66C72 78 84 98 91 126" stroke="#22d3ee" stroke-width="5" stroke-linecap="round"/>
+              <path d="M104 78C122 86 137 102 149 129" stroke="#34d399" stroke-width="5" stroke-linecap="round"/>
+              <path d="M164 61C178 74 186 88 193 112" stroke="#38bdf8" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="88" cy="91" r="18" fill="#0f172a" stroke="#38bdf8" stroke-width="6"/>
+              <path d="M88 67C76.4 67 67 76.4 67 88C67 103.8 88 124 88 124C88 124 109 103.8 109 88C109 76.4 99.6 67 88 67Z" fill="url(#pinGradient)"/>
+              <circle cx="88" cy="88" r="7" fill="#e0f2fe"/>
+              <rect x="146" y="94" width="30" height="18" rx="9" fill="rgba(56,189,248,0.16)" stroke="rgba(56,189,248,0.45)"/>
+              <rect x="154" y="73" width="42" height="18" rx="9" fill="rgba(16,185,129,0.14)" stroke="rgba(16,185,129,0.42)"/>
+              <defs>
+                <linearGradient id="pinGradient" x1="67" y1="67" x2="109" y2="124" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#38bdf8"/>
+                  <stop offset="1" stop-color="#10b981"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <a class="cta-link" href="{% url 'resources_map' %}">
+            Open Map
+            <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h12M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+        <div class="cta-card">
+          <span class="eyebrow">Beta</span>
+          <h3>Get Guided Help</h3>
+          <p>Answer a few questions and we’ll match you to tagged resources from the current data sheet.</p>
+          <span class="spacer"></span>
+          <div class="cta-status" aria-label="Guided triage work in progress">
+            <div class="cta-status-title">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span>Work In Progress</span>
+            </div>
+            <p>
+              Goal: build a guided triage flow that reads questionnaire answers and routes people to the most relevant tagged services from the data sheet.
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -224,6 +391,9 @@
       </p>
       <p class="reveal">
         We believe access should be simple. If you have suggestions or updates, we’d love to hear from you.
+      </p>
+      <p class="disclaimer-note reveal">
+        <strong>Reliability note:</strong> our reliability descriptions are based on what we found across calls, forums, online reviews, public listings, and similar sources at the time of review. Services can change, staff can change, and experiences can vary. If you find information that differs from what is shown here, treat our summary as the predominant pattern we found rather than a guarantee of current conditions.
       </p>
 
       <div class="grid">

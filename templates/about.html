@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Baltimore Lifeline - About</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #38bdf8;
+      --accent-2: #10b981;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: linear-gradient(180deg, var(--bg), #111827 60%, #0b1220);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    .container { max-width: 1000px; margin: 0 auto; padding: 24px; }
+    .hero { padding: 24px 0 12px; }
+    .hero h1 { margin: 0 0 10px; font-size: clamp(2rem, 5vw, 3rem); }
+    .hero p { margin: 0; color: var(--muted); font-size: clamp(1rem, 2.2vw, 1.15rem); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+      margin-top: 26px;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 18px;
+      min-height: 140px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    }
+    .card h3 { margin: 0 0 8px 0; font-size: 1.05rem; }
+    .card p { margin: 0; color: #a3a9b6; font-size: .98rem; }
+
+    .nav {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .ghost-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .ghost-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>About Baltimore Lifeline</h1>
+      <p>Baltimore Lifeline is a volunteer-driven effort to connect residents with critical services.</p>
+      <p>We now offer a guided questionnaire that matches your answers to suggested services, so you can get help faster without searching on your own.</p>
+      <div class="nav">
+        <a class="ghost-link" href="{% url 'homepage' %}">Home</a>
+        <a class="ghost-link" href="{% url 'actions' %}">Choose your path</a>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Guided Questionnaire</h3>
+        <p>Answer a few quick questions and we suggest resources that match your needs, risks, and barriers.</p>
+      </div>
+      <div class="card">
+        <h3>Targeted Recommendations</h3>
+        <p>We use your responses to prioritize services that fit your situation so you can focus on next steps.</p>
+      </div>
+      <div class="card">
+        <h3>Community-Driven & Mobile-Ready</h3>
+        <p>Built to work on phones and improved with feedback from local residents and volunteers.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

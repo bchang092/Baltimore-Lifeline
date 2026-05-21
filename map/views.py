@@ -2,8 +2,12 @@ from pathlib import Path
 import math
 
 from django.conf import settings
-from django.http import HttpResponse
-from django.shortcuts import render
+from django.http import Http404, HttpResponse
+from django.shortcuts import redirect, render
+from django.urls import reverse
+
+from .models import CommunityFeedback
+from .triage import build_triage_result
 
 
 # Path to your Excel file:  BmoreLine/input_data/1109 Upload_geocoded.xlsx
@@ -250,6 +254,16 @@ def _load_resources_from_xlsx():
             call_exp = str(grab(row, "Call experience", default="")).strip()
             extra = str(grab(row, "Unnamed: 18", default="")).strip()
             call_notes = " | ".join([x for x in [call_exp, extra] if x])
+            original_category = str(
+                grab(
+                    row,
+                    "Consolidated Category",
+                    "Consolidated Tag Category",
+                    "Cateogry of Help (Original)",
+                    "Category of Help (Original)",
+                    default="",
+                )
+            ).strip()
 
             lat_raw = grab(row, "Latitude", "Lat", default=None)
             lng_raw = grab(row, "Longitude", "Lng", "Long", default=None)
@@ -277,6 +291,7 @@ def _load_resources_from_xlsx():
                 "lat": lat,
                 "lng": lng,
                 "category": category,
+                "original_category": original_category,
                 "phone_number": phone,
                 "address": address,
                 "email": email,
@@ -338,352 +353,144 @@ def resources_map(request):
     )
 
 
-def _derive_tags_from_answers(answers):
-    need = set()
-    scenario = set()
-    barrier = set()
-    benefit = set()
-    insurance = set()
-    housing_status = set()
-    risk = set()
-    demo = set()
-    pathway = set()
-    access = set()
-    doc = set()
-    mobility = set()
-
-    def add(target, *tags):
-        for tag in tags:
-            if tag:
-                target.add(tag)
-
-    a1 = answers.get("A1_safe_tonight")
-    a2 = answers.get("A2_sleep_tonight")
-    a3 = answers.get("A3_threats_abuse")
-    a4 = set(answers.get("A4_needs_today", []))
-    b1 = answers.get("B1_where_staying")
-    b2 = answers.get("B2_losing_housing")
-    b3 = set(answers.get("B3_utilities", []))
-    c1 = answers.get("C1_food_2_3_days")
-    c2 = set(answers.get("C2_needs", []))
-    d1 = answers.get("D1_income")
-    d2 = set(answers.get("D2_trouble_paying", []))
-    d3 = set(answers.get("D3_benefits", []))
-    d4 = answers.get("D4_lost_medicaid")
-    d5 = set(answers.get("D5_help_applying", []))
-    e1 = set(answers.get("E1_health_needs", []))
-    e2 = answers.get("E2_have_doctor")
-    f1 = answers.get("F1_transport")
-    f2 = answers.get("F2_phone")
-    g1 = set(answers.get("G1_documents", []))
-    g2 = set(answers.get("G2_barriers", []))
-    h1 = set(answers.get("H1_household", []))
-    i1 = answers.get("I1_output_preference")
-
-    # Crisis / tonight rules
-    if a1 == "no" or a3 == "yes":
-        add(risk, "R003_DOMESTIC_VIOLENCE_IMMEDIATE")
-        add(scenario, "S005_FLEEING_VIOLENCE")
-        add(barrier, "B019_DOMESTIC_VIOLENCE")
-        add(housing_status, "H015_FLEEING_DV")
-        add(pathway, "P001_CRISIS_TONIGHT")
-
-    if a2 == "no" or b1 in {"outside", "car", "abandoned"}:
-        add(risk, "R002_NO_SHELTER_TONIGHT")
-        add(scenario, "S004_HOMELESS_TONIGHT")
-        add(need, "N010_SHELTER_TONIGHT")
-        add(pathway, "P002_SHELTER_TONIGHT")
-        if b1 == "outside":
-            add(housing_status, "H005_STREET_HOMELESS")
-        elif b1 == "car":
-            add(housing_status, "H006_CAR_HOMELESS")
-        elif b1 == "abandoned":
-            add(housing_status, "H007_ABANDONED_BUILDING")
-
-    if c1 == "no":
-        add(risk, "R001_NO_FOOD_NEXT_24H")
-        add(scenario, "S001_NO_FOOD")
-        add(need, "N002_GROCERIES")
-        add(pathway, "P003_FOOD_TODAY")
-    elif c1 == "sometimes":
-        add(need, "N002_GROCERIES")
-
-    # Housing status from B1
-    if b1 == "own_place":
-        add(housing_status, "H001_HOUSED_STABLE")
-    elif b1 == "friends_family":
-        add(housing_status, "H003_TEMPORARY_COUCH", "H009_DOUBLING_UP")
-        add(scenario, "S006_COUCH_SURFING")
-    elif b1 == "shelter":
-        add(housing_status, "H004_SHELTER")
-    elif b1 == "hotel_motel":
-        add(housing_status, "H008_HOTEL_MOTEL")
-
-    # Housing stability
-    if b2 == "yes" and b1 in {"own_place", "friends_family"}:
-        add(housing_status, "H002_HOUSED_AT_RISK", "H010_AT_RISK_30_DAYS")
-        add(scenario, "S007_EVICTION_NOTICE")
-        add(pathway, "P016_HOUSING_STABILITY_PATHWAY")
-
-    if "rent_utilities" in a4 or "rent_mortgage" in d2:
-        add(need, "N015_RENT_ASSISTANCE")
-        add(scenario, "S008_RENT_BEHIND")
-        add(pathway, "P007_RENT_RELIEF_THIS_WEEK")
-
-    # A4 needs today mapping
-    if "food" in a4:
-        add(need, "N002_GROCERIES", "N003_HOT_MEAL")
-        add(scenario, "S001_NO_FOOD")
-        add(pathway, "P003_FOOD_TODAY")
-    if "sleep" in a4:
-        add(need, "N010_SHELTER_TONIGHT")
-        add(scenario, "S004_HOMELESS_TONIGHT")
-        add(pathway, "P002_SHELTER_TONIGHT")
-    if "clothes_hygiene" in a4:
-        add(need, "N020_CLOTHES", "N023_HYGIENE_KITS")
-    if "phone_internet" in a4:
-        add(need, "N040_PHONE_SERVICE", "N042_INTERNET_ACCESS")
-        add(barrier, "B005_NO_PHONE", "B007_NO_INTERNET")
-        add(pathway, "P018_PHONE_ACCESS_PATHWAY")
-    if "transportation" in a4:
-        add(need, "N030_TRANSIT_PASS", "N031_RIDES_TO_APPTS")
-        add(barrier, "B017_NO_TRANSPORT")
-    if "medical_mental" in a4:
-        add(need, "N050_PRIMARY_CARE", "N051_MENTAL_HEALTH")
-        add(pathway, "P009_HEALTHCARE_ESTABLISH_PCP", "P010_MENTAL_HEALTH_PATHWAY")
-    if "medicaid_insurance" in a4:
-        add(insurance, "I006_UNSURE_INSURANCE")
-        add(pathway, "P005_MEDICAID_HELP_THIS_WEEK")
-    if "benefits_money" in a4:
-        add(benefit, "F008_NO_BENEFITS", "F013_CONFUSED_BENEFITS")
-        add(pathway, "P004_BENEFITS_THIS_WEEK")
-    if "childcare_family" in a4:
-        add(demo, "D007_PARENT", "D008_CAREGIVER")
-        add(pathway, "P012_CHILDCARE_PATHWAY")
-    if "disability_long_term" in a4:
-        add(demo, "D013_PERSON_WITH_DISABILITY")
-        add(barrier, "B008_DISABILITY_MOBILITY", "B009_DISABILITY_COGNITIVE")
-        add(pathway, "P020_LONG_TERM_SUPPORTS")
-    if "education_job" in a4:
-        add(pathway, "P013_JOB_PATHWAY", "P014_EDUCATION_PATHWAY")
-    if "legal" in a4:
-        add(pathway, "P015_LEGAL_ASSISTANCE_PATHWAY")
-
-    if d1 in {"no", "sometimes"}:
-        add(benefit, "F013_CONFUSED_BENEFITS")
-        add(pathway, "P004_BENEFITS_THIS_WEEK")
-
-    # Utilities
-    if b3.intersection({"electric", "gas", "water"}):
-        add(need, "N016_UTILITY_ASSISTANCE")
-        add(pathway, "P008_UTILITY_RELIEF_THIS_WEEK")
-        if "electric" in b3:
-            add(scenario, "S012_NO_POWER")
-        if "gas" in b3:
-            add(scenario, "S011_NO_HEAT")
-        if "water" in b3:
-            add(need, "N017_WATER_ASSISTANCE")
-            add(scenario, "S010_NO_WATER")
-
-    if "internet_phone" in b3 or f2 == "no" or "phone_internet" in a4:
-        add(need, "N040_PHONE_SERVICE", "N042_INTERNET_ACCESS")
-        if f2 == "no":
-            add(scenario, "S018_NO_PHONE")
-        elif f2 == "sometimes":
-            add(scenario, "S019_NO_DATA_LIMITED")
-        add(barrier, "B005_NO_PHONE", "B007_NO_INTERNET")
-        add(pathway, "P018_PHONE_ACCESS_PATHWAY")
-
-    # Food
-    if "hot_meals" in c2:
-        add(scenario, "S003_HOT_MEAL_NEEDED")
-        add(need, "N003_HOT_MEAL")
-        add(pathway, "P003_FOOD_TODAY")
-
-    if "baby_food" in c2:
-        add(need, "N005_BABY_FORMULA")
-        add(scenario, "S015_CHILDREN_NO_FOOD")
-        add(demo, "D007_PARENT")
-
-    # Essentials
-    if "hygiene" in c2 or "clothes_hygiene" in a4:
-        add(need, "N023_HYGIENE_KITS")
-
-    if "clothing_work" in c2:
-        add(need, "N022_WORK_CLOTHES")
-        add(scenario, "S017_WORK_CLOTHES_NEEDED")
-
-    if "clothing_everyday" in c2:
-        add(need, "N020_CLOTHES")
-
-    if "winter_clothing" in c2:
-        add(need, "N021_WARM_CLOTHES", "N024_BEDDING")
-        if b1 in {"outside", "car"}:
-            add(risk, "R007_OUTSIDE_IN_COLD")
-
-    # Benefits and insurance
-    if "none" in d3 and (d5 or "not_sure" in d5):
-        add(benefit, "F008_NO_BENEFITS", "F013_CONFUSED_BENEFITS")
-        add(pathway, "P004_BENEFITS_THIS_WEEK")
-
-    if "snap" in d3:
-        add(benefit, "F001_HAS_SNAP")
-    if "medicaid" in d3:
-        add(benefit, "F003_HAS_MEDICAID")
-    if "medicare" in d3:
-        add(benefit, "F004_HAS_MEDICARE")
-    elif "snap" in d5 or ("food" in d2 and "snap" not in d3):
-        add(benefit, "F016_SNAP_PENDING", "F013_CONFUSED_BENEFITS")
-        add(pathway, "P006_SNAP_THIS_WEEK")
-
-    if d4 == "yes":
-        add(scenario, "S029_LOST_MEDICAID")
-        add(benefit, "F011_LOST_MEDICAID")
-        add(insurance, "I007_LOST_MEDICAID_RED")
-        add(pathway, "P005_MEDICAID_HELP_THIS_WEEK")
-
-    if "medicaid" in d5:
-        add(insurance, "I008_MEDICAID_NEEDS_RENEWAL", "I006_UNSURE_INSURANCE")
-        add(pathway, "P005_MEDICAID_HELP_THIS_WEEK")
-    if "medicare" in d5:
-        add(insurance, "I006_UNSURE_INSURANCE")
-        add(pathway, "P005_MEDICAID_HELP_THIS_WEEK")
-    if "ssi_ssdi" in d5 or "unemployment" in d5 or "childcare" in d5:
-        add(benefit, "F013_CONFUSED_BENEFITS")
-        add(pathway, "P004_BENEFITS_THIS_WEEK")
-
-    if e2 == "no" and (("medical_mental" in a4) or e1):
-        add(insurance, "I001_NO_INSURANCE")
-        add(insurance, "I014_NO_PCP")
-        add(scenario, "S025_NO_PRIMARY_CARE")
-        add(pathway, "P009_HEALTHCARE_ESTABLISH_PCP")
-
-    # Healthcare
-    if "primary_care" in e1 or e2 == "no":
-        add(need, "N050_PRIMARY_CARE")
-        add(scenario, "S025_NO_PRIMARY_CARE")
-        add(insurance, "I014_NO_PCP")
-        add(pathway, "P009_HEALTHCARE_ESTABLISH_PCP")
-
-    if "mental_health" in e1:
-        add(need, "N051_MENTAL_HEALTH")
-        add(scenario, "S026_NO_MENTAL_HEALTH")
-        add(barrier, "B014_MENTAL_HEALTH_BARRIER")
-        add(pathway, "P010_MENTAL_HEALTH_PATHWAY")
-
-    if "substance_use" in e1:
-        add(need, "N052_SUBSTANCE_USE")
-        add(scenario, "S027_RECOVERY_SUPPORT")
-        add(barrier, "B015_ADDICTION_BARRIER")
-        add(pathway, "P011_SUBSTANCE_PATHWAY")
-
-    if "prescriptions" in e1 or "medical" in d2:
-        add(need, "N057_PHARMACY_ASSIST")
-        add(insurance, "I013_MEDICATION_COST_ISSUE")
-
-    if "dental" in e1:
-        add(need, "N053_DENTAL")
-    if "vision" in e1:
-        add(need, "N054_VISION")
-    if "equipment" in e1:
-        add(need, "N056_MED_EQUIPMENT")
-    if "prenatal" in e1:
-        add(need, "N055_PRENATAL")
-        add(insurance, "I018_PRENATAL_CARE_NEEDED")
-        add(demo, "D006_PREGNANT")
-
-    # Transportation
-    if f1 == "no_reliable" and e1:
-        add(barrier, "B017_NO_TRANSPORT")
-        add(need, "N031_RIDES_TO_APPTS")
-        add(scenario, "S022_NEED_TRANSIT_TO_MEDICAL")
-
-    food_insecure = c1 in {"no", "sometimes"} or "food" in a4
-    if (f1 == "no_reliable" or "transportation" in a4) and food_insecure:
-        add(need, "N034_RIDES_TO_PANTRY")
-        add(scenario, "S023_NEED_TRANSIT_TO_PANTRY")
-
-    # Documents and barriers
-    if "none" in g1:
-        add(barrier, "B001_NO_ID", "B002_NO_SSN", "B003_NO_BIRTH_CERT", "B004_NO_DOCUMENTS")
-        add(doc, "DOC002_NO_ID", "DOC004_NO_SSN", "DOC006_NO_BC")
-        add(pathway, "P017_ID_RECOVERY_PATHWAY")
-
-    if "immigration" in g2:
-        add(barrier, "B013_IMMIGRATION_FEAR", "B038_UNDOCUMENTED")
-        add(demo, "D010_UNDOCUMENTED")
-
-    if "disability" in g2:
-        add(barrier, "B008_DISABILITY_MOBILITY", "B009_DISABILITY_COGNITIVE")
-        add(demo, "D013_PERSON_WITH_DISABILITY")
-
-    if "criminal_record" in g2:
-        add(barrier, "B012_CRIMINAL_RECORD")
-        add(demo, "D012_REENTRY")
-
-    if "limited_english" in g2:
-        add(barrier, "B010_LANGUAGE_BARRIER", "B011_LOW_LITERACY")
-        add(access, "A008_LOW_LITERACY_MODE")
-
-    if "no_phone_internet" in g2:
-        add(barrier, "B005_NO_PHONE", "B007_NO_INTERNET", "B024_TECH_BARRIER")
-        add(need, "N040_PHONE_SERVICE", "N042_INTERNET_ACCESS")
-
-    # Household
-    if "children" in h1:
-        add(demo, "D007_PARENT")
-    if "older_adult" in h1:
-        add(demo, "D005_OLDER_ADULT", "D008_CAREGIVER")
-    if "disability" in h1:
-        add(demo, "D013_PERSON_WITH_DISABILITY")
-
-    # Output preferences
-    if i1 == "text":
-        add(mobility, "M007_PREFER_TEXT")
-    if i1 == "email":
-        add(mobility, "M008_PREFER_EMAIL")
-    if i1 == "printable":
-        add(mobility, "M009_PREFER_PRINT")
-    if i1 == "helper":
-        add(access, "A010_SIMPLE_MODE")
-
-    # Cleanup rules
-    if "F001_HAS_SNAP" in benefit and "F008_NO_BENEFITS" in benefit:
-        benefit.discard("F008_NO_BENEFITS")
-    if ("F003_HAS_MEDICAID" in benefit or "F004_HAS_MEDICARE" in benefit) and "I001_NO_INSURANCE" in insurance:
-        insurance.discard("I001_NO_INSURANCE")
-
-    all_tags = set().union(
-        need,
-        scenario,
-        barrier,
-        benefit,
-        insurance,
-        housing_status,
-        risk,
-        demo,
-        pathway,
-        access,
-        doc,
-        mobility,
-    )
-
-    return {
-        "crisis_tags": sorted(risk),
-        "need_tags": sorted(need),
-        "scenario_tags": sorted(scenario),
-        "barrier_tags": sorted(barrier),
-        "benefit_tags": sorted(benefit),
-        "insurance_tags": sorted(insurance),
-        "housing_status_tags": sorted(housing_status),
-        "demographic_tags": sorted(demo),
-        "pathway_tags": sorted(pathway),
-        "all_tags_deduped": sorted(all_tags),
-    }
-
-
 def home_page(request):
     return render(request, "home.html")
+
+
+FEATURE_PAGES = {
+    "data-quality": {
+        "eyebrow": "Data Quality",
+        "title": "Up-to-date Data",
+        "summary": "We keep resource information current through repeated review, verification, and cleanup so people are not sent in the wrong direction.",
+        "intro": (
+            "Good resource directories fail when they go stale. Baltimore Lifeline is built around"
+            " the idea that accuracy matters as much as access, so we continuously review listings"
+            " and update details when better information is available."
+        ),
+        "highlights": [
+            "We review addresses, phone numbers, links, and service descriptions before listings remain in our working dataset.",
+            "When public information conflicts, we look for the strongest available source trail rather than copying a single listing blindly.",
+            "Reliability notes are meant to summarize patterns we found during review, not to overstate certainty where conditions may still change.",
+        ],
+        "commitment_title": "Why this matters",
+        "commitment_body": (
+            "People using this tool are often making decisions under pressure. Clearer, cleaner, and more current listings reduce wasted time and help residents reach the right service faster."
+        ),
+    },
+    "mobile-first": {
+        "eyebrow": "Accessibility",
+        "title": "Mobile-first",
+        "summary": "The site is designed to work well on phones so residents and volunteers can use it in the field, on transit, or during urgent searches.",
+        "intro": (
+            "Many people access community resources from a phone, not a desktop. That means the experience has to stay readable, lightweight, and easy to navigate on smaller screens."
+        ),
+        "highlights": [
+            "Core actions are kept visible and simple so users can get to the map or guided flow quickly.",
+            "Layouts are built to remain legible on smaller devices, including in lower-attention or on-the-go situations.",
+            "We prioritize straightforward interactions over clutter so information stays usable when time and bandwidth are limited.",
+        ],
+        "commitment_title": "Why this matters",
+        "commitment_body": (
+            "If a resource tool only works well on a large screen, it fails many of the people who need it most. A mobile-first approach keeps access practical in real-world conditions."
+        ),
+    },
+    "community-led": {
+        "eyebrow": "Community Input",
+        "title": "Open & Community-led",
+        "summary": "The project improves through local feedback, corrections, and suggestions rather than pretending the first version of the dataset is enough.",
+        "intro": (
+            "Community resource information is never fully finished. Services change, people notice gaps, and local knowledge often reveals what a spreadsheet misses."
+        ),
+        "highlights": [
+            "We treat suggestions and corrections as part of the maintenance process, not as an afterthought.",
+            "The project is volunteer-driven, which means feedback from residents and organizers directly helps improve coverage.",
+            "A community-led model makes the directory more accountable to lived experience rather than relying only on static public listings.",
+        ],
+        "commitment_title": "Why this matters",
+        "commitment_body": (
+            "A useful directory should evolve with the people who rely on it. Community feedback helps us catch omissions, improve clarity, and focus on what is actually useful on the ground."
+        ),
+    },
+}
+
+
+QUESTION_DEFAULTS = {
+    "travel_access": {
+        "value": "transit",
+        "question": "Travel access",
+        "assumed_label": "Transit, rides, or some travel",
+    },
+    "immediate_danger": {
+        "value": "no",
+        "question": "Immediate danger",
+        "assumed_label": "No",
+    },
+    "mental_health_crisis": {
+        "value": "no",
+        "question": "Mental health crisis",
+        "assumed_label": "No",
+    },
+    "unsafe_home": {
+        "value": "no",
+        "question": "Unsafe home",
+        "assumed_label": "No",
+    },
+    "safe_place_tonight": {
+        "value": "yes",
+        "question": "Safe place to sleep tonight",
+        "assumed_label": "Yes",
+    },
+    "food_today": {
+        "value": "yes",
+        "question": "Enough food for today",
+        "assumed_label": "Yes",
+    },
+    "housing_risk": {
+        "value": "no",
+        "question": "Housing risk",
+        "assumed_label": "No",
+    },
+    "utilities_help": {
+        "value": "no",
+        "question": "Utilities or bills help",
+        "assumed_label": "No",
+    },
+    "transportation_needed": {
+        "value": "no",
+        "question": "Transportation needed",
+        "assumed_label": "No",
+    },
+    "essential_supplies": {
+        "value": "no",
+        "question": "Essential supplies needed",
+        "assumed_label": "No",
+    },
+    "employment_help": {
+        "value": "no",
+        "question": "Employment help",
+        "assumed_label": "No",
+    },
+    "family_support": {
+        "value": "no",
+        "question": "Child or family support",
+        "assumed_label": "No",
+    },
+    "senior_support": {
+        "value": "no",
+        "question": "Senior support",
+        "assumed_label": "No",
+    },
+    "disability_support": {
+        "value": "no",
+        "question": "Disability or accessibility support",
+        "assumed_label": "No",
+    },
+    "resource_navigation": {
+        "value": "no",
+        "question": "General resource navigation",
+        "assumed_label": "No",
+    },
+}
 
 
 def questionnaire_page(request):
@@ -694,55 +501,37 @@ def questionnaire_page(request):
         def get_list(name):
             return [v for v in request.POST.getlist(name) if v]
 
-        answers = {
-            "A1_safe_tonight": get("A1_safe_tonight"),
-            "A2_sleep_tonight": get("A2_sleep_tonight"),
-            "A3_threats_abuse": get("A3_threats_abuse"),
-            "A4_needs_today": get_list("A4_needs_today"),
-            "B1_where_staying": get("B1_where_staying"),
-            "B2_losing_housing": get("B2_losing_housing"),
-            "B3_utilities": get_list("B3_utilities"),
-            "C1_food_2_3_days": get("C1_food_2_3_days"),
-            "C2_needs": get_list("C2_needs"),
-            "D1_income": get("D1_income"),
-            "D2_trouble_paying": get_list("D2_trouble_paying"),
-            "D3_benefits": get_list("D3_benefits"),
-            "D4_lost_medicaid": get("D4_lost_medicaid"),
-            "D5_help_applying": get_list("D5_help_applying"),
-            "E1_health_needs": get_list("E1_health_needs"),
-            "E2_have_doctor": get("E2_have_doctor"),
-            "F1_transport": get("F1_transport"),
-            "F2_phone": get("F2_phone"),
-            "G1_documents": get_list("G1_documents"),
-            "G2_barriers": get_list("G2_barriers"),
-            "H1_household": get_list("H1_household"),
-            "I1_output_preference": get("I1_output_preference"),
-        }
+        default_assumptions = []
 
-        tags = _derive_tags_from_answers(answers)
-        tagset = set(tags["all_tags_deduped"])
+        answers = {
+            "user_lat": get("user_lat"),
+            "user_lng": get("user_lng"),
+            "health_support": get_list("health_support"),
+            "documents_help": get_list("documents_help"),
+        }
+        for field_name, meta in QUESTION_DEFAULTS.items():
+            raw_value = get(field_name)
+            if raw_value:
+                answers[field_name] = raw_value
+                continue
+
+            answers[field_name] = meta["value"]
+            default_assumptions.append(
+                {
+                    "question": meta["question"],
+                    "assumed_label": meta["assumed_label"],
+                }
+            )
 
         resources, _diag = _load_resources_from_xlsx()
-
-        if tagset:
-            filtered = []
-            for r in resources:
-                r_tags = set(r.get("tags") or [])
-                if r_tags & tagset:
-                    filtered.append(r)
-        else:
-            filtered = resources
-
-        filtered.sort(key=lambda r: len(set(r.get("tags") or []) & tagset), reverse=True)
+        triage_result = build_triage_result(answers, resources)
+        triage_result["default_assumptions"] = default_assumptions
+        triage_result["default_assumption_count"] = len(default_assumptions)
 
         return render(
             request,
             "map_recommended.html",
-            {
-                "resources": filtered,
-                "tags": tags,
-                "tag_count": len(tagset),
-            },
+            triage_result,
         )
 
     return render(request, "questionnaire.html")
@@ -754,6 +543,77 @@ def actions_page(request):
 
 def about_page(request):
     return render(request, "about.html")
+
+
+def community_page(request):
+    categories = CommunityFeedback.CATEGORY_CHOICES
+    active_category = (request.GET.get("category") or "").strip()
+    form_data = {
+        "name": "",
+        "category": CommunityFeedback.CATEGORY_SUGGESTION,
+        "title": "",
+        "body": "",
+    }
+    errors = {}
+
+    if request.method == "POST":
+        form_data = {
+            "name": (request.POST.get("name") or "").strip(),
+            "category": (request.POST.get("category") or "").strip(),
+            "title": (request.POST.get("title") or "").strip(),
+            "body": (request.POST.get("body") or "").strip(),
+        }
+
+        valid_categories = {value for value, _label in categories}
+
+        if form_data["category"] not in valid_categories:
+            errors["category"] = "Choose a valid feedback type."
+        if not form_data["title"]:
+            errors["title"] = "Add a short title."
+        if not form_data["body"]:
+            errors["body"] = "Add your feedback before submitting."
+
+        if not errors:
+            CommunityFeedback.objects.create(
+                name=form_data["name"],
+                category=form_data["category"],
+                title=form_data["title"],
+                body=form_data["body"],
+                approved=True,
+            )
+            redirect_url = reverse("community")
+            if active_category:
+                redirect_url = f"{redirect_url}?submitted=1&category={active_category}"
+            else:
+                redirect_url = f"{redirect_url}?submitted=1"
+            return redirect(redirect_url)
+
+    valid_categories = {value for value, _label in categories}
+    posts = CommunityFeedback.objects.all()
+    if active_category in valid_categories:
+        posts = posts.filter(category=active_category)
+    else:
+        active_category = ""
+
+    return render(
+        request,
+        "community.html",
+        {
+            "posts": posts,
+            "categories": categories,
+            "active_category": active_category,
+            "form_data": form_data,
+            "errors": errors,
+            "submitted": request.GET.get("submitted") == "1",
+        },
+    )
+
+
+def feature_detail_page(request, slug):
+    feature = FEATURE_PAGES.get(slug)
+    if feature is None:
+        raise Http404("Feature page not found")
+    return render(request, "feature_detail.html", {"feature": feature, "feature_slug": slug})
 
 
 # debug endpoint still available

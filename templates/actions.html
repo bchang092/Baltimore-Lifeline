@@ -35,7 +35,7 @@
 
     .cta-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(240px, 1fr));
+      grid-template-columns: repeat(3, minmax(220px, 1fr));
       gap: 18px;
       margin-top: 22px;
     }
@@ -93,7 +93,7 @@
     <div class="hero">
       <div>
         <h1>Choose your path</h1>
-        <p>Pick the option that fits you best - browse everything or get guided help.</p>
+        <p>Pick the option that fits you best - browse everything, get guided help, or leave feedback.</p>
         <div class="nav">
           <a class="ghost-link" href="{% url 'homepage' %}">Home</a>
           <a class="ghost-link" href="{% url 'about' %}">About us</a>
@@ -113,6 +113,12 @@
         <p>Answer a few questions and we'll find help for you.</p>
         <span class="spacer"></span>
         <a class="cta-link" href="{% url 'questionnaire' %}">Start Questionnaire</a>
+      </div>
+      <div class="cta-card">
+        <h3>Community Feedback</h3>
+        <p>Leave suggestions, corrections, bug reports, or service experiences in a simple public board.</p>
+        <span class="spacer"></span>
+        <a class="cta-link" href="{% url 'community' %}">Open Feedback Board</a>
       </div>
     </div>
   </div>

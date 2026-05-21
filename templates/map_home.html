@@ -34,10 +34,16 @@
 
     /* Toolbar with collapsible filters */
     .map-toolbar {
-      position: absolute; z-index: 1000; top: 10px; left: 10px;
+      position: absolute; z-index: 1000; top: 10px; left: 64px;
       background: rgba(17, 24, 39, 0.94); backdrop-filter: saturate(140%) blur(4px);
       padding: 8px 10px 10px; border-radius: 12px; box-shadow: 0 8px 24px var(--shadow);
-      border: 1px solid var(--border); max-width: min(90vw, 820px); color: var(--text);
+      border: 1px solid var(--border); max-width: min(calc(100vw - 84px), 820px); color: var(--text);
+    }
+    .map-home-float {
+      position: absolute;
+      z-index: 1001;
+      top: 10px;
+      left: 10px;
     }
     .toolbar-row {
       display: flex;
@@ -81,22 +87,26 @@
       color: #081018; font-weight: 700; border: 0; cursor: pointer;
       box-shadow: 0 6px 16px rgba(56,189,248,0.25), 0 4px 10px rgba(16,185,129,0.20);
     }
-    .home-link {
+    .home-icon-link {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
-      padding: 8px 12px;
-      margin-top: 6px;
+      width: 40px;
+      height: 40px;
+      flex: 0 0 auto;
       border-radius: 10px;
       border: 1px solid var(--border);
       background: rgba(15,23,42,0.96);
       color: var(--text);
       text-decoration: none;
-      font-weight: 700;
     }
-    .home-link:hover {
+    .home-icon-link:hover {
       background: #121a2d;
+    }
+    .home-icon-link svg {
+      width: 18px;
+      height: 18px;
+      display: block;
     }
     .legend { margin-top: 6px; font-size: 12px; line-height: 1.4; color: #cbd5e1; }
     .legend-item { display: inline-flex; align-items: center; margin-right: 12px; margin-top: 6px; }
@@ -183,6 +193,12 @@
 </head>
 <body>
 
+  <a class="map-home-float home-icon-link" href="{% url 'homepage' %}" aria-label="Return to homepage" title="Home">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M3 10.5L12 3L21 10.5V20C21 20.6 20.6 21 20 21H15V14H9V21H4C3.4 21 3 20.6 3 20V10.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+    </svg>
+  </a>
+
   <!-- Toolbar -->
   <div class="map-toolbar" role="region" aria-label="Map search and filters">
     <div class="toolbar-row">
@@ -190,7 +206,6 @@
       <button id="resetBtn" type="button">Reset</button>
       <button id="filterToggle" class="filter-toggle" type="button" aria-label="Toggle filters">Filters</button>
       <button id="filterHide" class="filter-hide" type="button" aria-label="Hide filters">Hide</button>
-      <a class="home-link" href="{% url 'homepage' %}">Home</a>
     </div>
     <div id="filtersPanel" class="filters-panel">
       <div class="filter-section">

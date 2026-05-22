@@ -4,19 +4,22 @@
   <meta charset="utf-8" />
   <title>Baltimore Lifeline - Your Help Plan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="/static/BaltimoreLifelineIcon.png?v=3">
+  <link rel="shortcut icon" href="/static/BaltimoreLifelineIcon.png?v=3">
+  <link rel="apple-touch-icon" href="/static/BaltimoreLifelineIcon.png?v=3">
 
   <style>
     :root {
       --bg: #0f172a;
       --bg-2: #0b1220;
-      --panel: rgba(17,24,39,0.9);
-      --panel-soft: rgba(15,23,42,0.76);
+      --panel: rgba(17,24,39,0.92);
+      --panel-soft: rgba(15,23,42,0.8);
       --text: #e5e7eb;
       --muted: #9ca3af;
       --accent: #38bdf8;
       --accent-2: #10b981;
       --border: rgba(255,255,255,0.08);
-      --shadow: rgba(0,0,0,0.35);
+      --shadow: rgba(0,0,0,0.38);
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
@@ -30,8 +33,11 @@
       line-height: 1.5;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
+    body.modal-open {
+      overflow: hidden;
+    }
     .container {
-      max-width: 1220px;
+      max-width: 1160px;
       margin: 0 auto;
       padding: 28px 24px 84px;
     }
@@ -54,6 +60,25 @@
       gap: 10px;
       flex-wrap: wrap;
     }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(22,31,49,0.9), rgba(12,18,31,0.86));
+      color: var(--text);
+      font: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .back-btn svg {
+      width: 16px;
+      height: 16px;
+    }
     .ghost-btn {
       display: inline-flex;
       align-items: center;
@@ -67,13 +92,30 @@
       font-size: 0.9rem;
       font-weight: 650;
     }
+    .home-icon-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,0.96);
+      color: var(--text);
+      text-decoration: none;
+    }
+    .home-icon-link svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
     .hero {
       background: rgba(17,24,39,0.9);
       border: 1px solid var(--border);
       border-radius: 24px;
       padding: 28px 24px 24px;
       box-shadow: 0 10px 28px var(--shadow);
-      margin-bottom: 24px;
+      margin-bottom: 26px;
     }
     .eyebrow {
       display: inline-flex;
@@ -93,13 +135,13 @@
       margin: 0 0 12px;
       font-size: clamp(2.4rem, 5vw, 4rem);
       line-height: 1.02;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.035em;
     }
     .hero p {
       margin: 0;
-      max-width: 760px;
+      max-width: 720px;
       color: #cbd5e1;
-      font-size: 1.05rem;
+      font-size: 1.04rem;
       line-height: 1.72;
     }
     .crisis-grid {
@@ -117,18 +159,19 @@
     }
     .crisis-card h2 {
       margin: 0 0 10px;
-      font-size: 1.45rem;
-      line-height: 1.15;
+      font-size: 1.3rem;
+      line-height: 1.14;
       color: #fecaca;
     }
     .crisis-card p {
       margin: 0 0 16px;
       color: #fee2e2;
-      font-size: 1rem;
+      font-size: 0.98rem;
       line-height: 1.68;
     }
     .crisis-link,
-    .action-link {
+    .action-link,
+    .modal-close {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -145,9 +188,9 @@
     }
     .section-heading {
       margin: 0 0 8px;
-      font-size: clamp(1.9rem, 3vw, 2.6rem);
+      font-size: clamp(1.95rem, 3vw, 2.7rem);
       line-height: 1.08;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.035em;
     }
     .section-copy {
       margin: 0 0 26px;
@@ -156,32 +199,61 @@
       font-size: 1rem;
       line-height: 1.72;
     }
-    .priority-stack {
+    .priority-grid {
       display: grid;
-      gap: 30px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
     }
-    .priority-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: end;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
+    .priority-card {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--panel);
+      color: var(--text);
+      box-shadow: 0 10px 26px var(--shadow);
+      padding: 22px 20px 20px;
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
     }
-    .priority-lead {
-      max-width: 760px;
+    .priority-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(56,189,248,0.24);
+      background: rgba(20,30,46,0.96);
+    }
+    .priority-card:focus-visible {
+      outline: 2px solid rgba(56,189,248,0.32);
+      outline-offset: 3px;
     }
     .priority-title {
       margin: 0;
-      font-size: clamp(1.45rem, 2.2vw, 1.95rem);
+      font-size: 1.65rem;
       line-height: 1.1;
-      letter-spacing: -0.025em;
+      letter-spacing: -0.03em;
+    }
+    .priority-copy {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.68;
     }
     .priority-meta {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-      white-space: nowrap;
+      margin-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+    .priority-count {
+      color: #dbeafe;
+      font-size: 0.96rem;
+      font-weight: 700;
+    }
+    .priority-open {
+      color: #7dd3fc;
+      font-size: 0.9rem;
+      font-weight: 700;
     }
     .tier-pill,
     .match-pill,
@@ -200,60 +272,101 @@
       color: #dbeafe;
       background: rgba(56,189,248,0.1);
       border-color: rgba(56,189,248,0.24);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
-    .priority-tags,
-    .resource-meta,
     .match-pills,
+    .resource-meta,
     .resource-actions {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       align-items: center;
     }
+    .match-pills {
+      margin-top: 12px;
+    }
     .match-pill {
       background: rgba(255,255,255,0.04);
       color: #dbeafe;
     }
-    .priority-tags {
-      margin-top: 12px;
+    .category-pill {
+      background: rgba(56,189,248,0.12);
+      border-color: rgba(56,189,248,0.22);
+      color: #93c5fd;
     }
-    .priority-tags .match-pill {
-      color: #e5eef9;
+    .modal-shell {
+      position: fixed;
+      inset: 0;
+      z-index: 3000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
     }
-    .resource-rail {
+    .modal-shell.open {
+      display: flex;
+    }
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(5,10,18,0.7);
+      backdrop-filter: blur(6px);
+    }
+    .modal-panel {
+      position: relative;
+      width: min(980px, 100%);
+      max-height: min(88vh, 920px);
+      background: rgba(11,18,32,0.96);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 28px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      padding: 24px 24px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(17,24,39,0.82);
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: start;
+      flex-wrap: wrap;
+    }
+    .modal-title {
+      margin: 0;
+      font-size: clamp(1.8rem, 3.2vw, 2.4rem);
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+    }
+    .modal-copy {
+      margin: 12px 0 0;
+      color: #cbd5e1;
+      font-size: 0.98rem;
+      line-height: 1.7;
+      max-width: 680px;
+    }
+    .modal-close {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+    .modal-body {
+      padding: 20px 24px 24px;
+      overflow-y: auto;
       display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(320px, 380px);
-      gap: 16px;
-      overflow-x: auto;
-      overscroll-behavior-x: contain;
-      scroll-snap-type: x proximity;
-      padding: 4px 2px 10px;
-    }
-    .resource-rail::-webkit-scrollbar {
-      height: 10px;
-    }
-    .resource-rail::-webkit-scrollbar-track {
-      background: rgba(255,255,255,0.03);
-      border-radius: 999px;
-    }
-    .resource-rail::-webkit-scrollbar-thumb {
-      background: rgba(148,163,184,0.24);
-      border-radius: 999px;
+      gap: 14px;
     }
     .resource-card,
     .empty-card {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 24px;
-      box-shadow: 0 10px 26px var(--shadow);
+      border-radius: 22px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.22);
       padding: 20px 18px 18px;
-      min-height: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      scroll-snap-align: start;
     }
     .resource-top {
       display: flex;
@@ -261,30 +374,30 @@
       gap: 14px;
       align-items: start;
       flex-wrap: wrap;
+      margin-bottom: 12px;
     }
     .resource-card h3,
     .empty-card h3 {
       margin: 0;
-      font-size: 1.12rem;
+      font-size: 1.14rem;
       line-height: 1.32;
       letter-spacing: -0.015em;
     }
-    .category-pill {
-      background: rgba(56,189,248,0.12);
-      border-color: rgba(56,189,248,0.22);
-      color: #93c5fd;
-    }
     .resource-body,
     .empty-card p {
-      margin: 0;
+      margin: 0 0 14px;
       color: #d3dae4;
       font-size: 0.96rem;
       line-height: 1.68;
     }
     .resource-grid {
       display: grid;
-      gap: 10px;
-      margin-top: auto;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px 16px;
+      margin-bottom: 14px;
+    }
+    .resource-wide-field {
+      margin: 0 0 14px;
     }
     .field-label {
       display: block;
@@ -300,6 +413,7 @@
       line-height: 1.6;
     }
     .warning-note {
+      margin: 0 0 14px;
       padding: 12px 14px;
       border-radius: 14px;
       background: rgba(245,158,11,0.12);
@@ -317,8 +431,8 @@
       border: 1px solid var(--border);
       color: var(--text);
     }
-    .empty-card {
-      justify-content: center;
+    .empty-card p:last-child {
+      margin-bottom: 0;
     }
     .empty-state {
       padding: 24px 22px;
@@ -331,8 +445,9 @@
     @media (max-width: 760px) {
       .container { padding: 22px 18px 64px; }
       .hero h1 { font-size: clamp(2rem, 12vw, 3rem); }
-      .resource-rail { grid-auto-columns: minmax(280px, 88vw); }
-      .priority-meta { white-space: normal; }
+      .modal-shell { padding: 12px; }
+      .modal-header,
+      .modal-body { padding-left: 18px; padding-right: 18px; }
     }
   </style>
 </head>
@@ -341,17 +456,26 @@
     <div class="topbar">
       <div class="brand">Baltimore <span>Lifeline</span></div>
       <div class="nav-links">
+        <button class="back-btn" type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{% url 'homepage' %}'; }">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 6L9 12L15 18M10 12H21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Back</span>
+        </button>
         <a class="ghost-btn" href="{% url 'questionnaire' %}">Retake questionnaire</a>
-        <a class="ghost-btn" href="{% url 'resources_map' %}">Full map</a>
-        <a class="ghost-btn" href="{% url 'homepage' %}">Home</a>
+        <a class="home-icon-link" href="{% url 'homepage' %}" aria-label="Return to homepage" title="Home">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3 10.5L12 3L21 10.5V20C21 20.6 20.6 21 20 21H15V14H9V21H4C3.4 21 3 20.6 3 20V10.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+        </a>
       </div>
     </div>
 
     <section class="hero">
       <div class="eyebrow">Personalized Help Plan</div>
-      <h1>Your top needs, prioritized</h1>
+      <h1>Your priorities, at a glance</h1>
       <p>
-        Your recommendations are organized by priority. Each section below shows the needs we identified first, followed by the resources that best matched that priority.
+        We translated your answers into priority groups. Open any priority to see the matching sources underneath it.
       </p>
     </section>
 
@@ -368,114 +492,39 @@
     {% endif %}
 
     <section>
-      <h2 class="section-heading">Resources By Priority</h2>
+      <h2 class="section-heading">Priority Groups</h2>
       <p class="section-copy">
-        Scroll sideways within a priority if you want to see more sources in that same group.
+        Start with the highest priority. A source may appear in more than one group if it matches multiple needs.
       </p>
 
       {% if display_groups %}
-        <div class="priority-stack">
+        <div class="priority-grid">
           {% for group in display_groups %}
-            <section class="priority-section">
-              <div class="priority-head">
-                <div class="priority-lead">
-                  <div class="tier-pill">Priority {{ group.tier }}</div>
-                  <h3 class="priority-title">{{ group.label }}</h3>
-                  <div class="priority-tags">
-                    {% for tag in group.tags %}
-                      <span class="match-pill">{{ tag.label }}</span>
-                    {% endfor %}
-                  </div>
-                </div>
-                <p class="priority-meta">
-                  {{ group.count }} resource{{ group.count|pluralize }}{% if group.count > 1 %} available in this row{% endif %}
-                </p>
+            <button
+              class="priority-card"
+              type="button"
+              data-modal-target="priority-modal-{{ group.tier }}"
+              aria-haspopup="dialog"
+            >
+              <div class="tier-pill">Priority {{ group.display_order }}</div>
+              <h3 class="priority-title">{{ group.label }}</h3>
+              <div class="match-pills">
+                {% for tag in group.tags %}
+                  <span class="match-pill">{{ tag.label }}</span>
+                {% endfor %}
               </div>
-
-              <div class="resource-rail">
-                {% if group.resources %}
-                  {% for resource in group.resources %}
-                    <article class="resource-card">
-                      <div class="resource-top">
-                        <div>
-                          <h3>{{ resource.name }}</h3>
-                          <div class="resource-meta" style="margin-top: 10px;">
-                            <span class="category-pill">{{ resource.category }}</span>
-                            {% if resource.original_category %}
-                              <span class="match-pill">{{ resource.original_category }}</span>
-                            {% endif %}
-                            {% if resource.distance_label %}
-                              <span class="match-pill">{{ resource.distance_label }}</span>
-                            {% endif %}
-                            <span class="reliability-pill" style="border-color: {{ resource.reliability_meta.color }}; color: {{ resource.reliability_meta.color }};">
-                              {{ resource.reliability_meta.label }}
-                            </span>
-                          </div>
-                        </div>
-                        {% if resource.primary_tag %}
-                          <div class="tier-pill" style="margin-bottom: 0;">{{ resource.primary_tag.label }}</div>
-                        {% endif %}
-                      </div>
-
-                      {% if resource.description %}
-                        <p class="resource-body">{{ resource.description }}</p>
-                      {% endif %}
-
-                      <div class="match-pills">
-                        {% for tag in resource.matched_tags %}
-                          <span class="match-pill">{{ tag.label }}</span>
-                        {% endfor %}
-                      </div>
-
-                      <div class="resource-grid">
-                        {% if resource.address %}
-                          <div>
-                            <span class="field-label">Address</span>
-                            <div class="field-value">{{ resource.address }}</div>
-                          </div>
-                        {% endif %}
-                        {% if resource.phone_number %}
-                          <div>
-                            <span class="field-label">Phone</span>
-                            <div class="field-value">{{ resource.phone_number }}</div>
-                          </div>
-                        {% endif %}
-                        {% if resource.days %}
-                          <div>
-                            <span class="field-label">Hours / Availability</span>
-                            <div class="field-value">{{ resource.days }}</div>
-                          </div>
-                        {% endif %}
-                        {% if resource.restrictions %}
-                          <div>
-                            <span class="field-label">Restrictions</span>
-                            <div class="field-value">{{ resource.restrictions }}</div>
-                          </div>
-                        {% endif %}
-                      </div>
-
-                      {% if resource.warning_note %}
-                        <div class="warning-note">{{ resource.warning_note }}</div>
-                      {% endif %}
-
-                      <div class="resource-actions">
-                        <a class="action-link primary" href="{{ resource.directions_url }}" target="_blank" rel="noopener noreferrer">Get directions</a>
-                        {% if resource.link %}
-                          <a class="action-link secondary" href="{{ resource.link }}" target="_blank" rel="noopener noreferrer">Visit site</a>
-                        {% endif %}
-                      </div>
-                    </article>
-                  {% endfor %}
+              <p class="priority-copy">
+                {% if group.count %}
+                  Open this priority to view {{ group.count }} matching source{{ group.count|pluralize }}.
                 {% else %}
-                  <article class="empty-card">
-                    <h3>No strong matches surfaced yet</h3>
-                    <p>
-                      This priority came from your answers, but the current dataset did not surface a close resource match for it in this pass.
-                    </p>
-                  </article>
+                  No close matches surfaced yet, but you can still open this priority to see the status.
                 {% endif %}
+              </p>
+              <div class="priority-meta">
+                <span class="priority-count">{{ group.count }} source{{ group.count|pluralize }}</span>
+                <span class="priority-open">Open priority</span>
               </div>
-            </section>
+            </button>
           {% endfor %}
         </div>
       {% else %}
@@ -485,5 +534,145 @@
       {% endif %}
     </section>
   </div>
+
+  {% for group in display_groups %}
+    <div class="modal-shell" id="priority-modal-{{ group.tier }}" role="dialog" aria-modal="true" aria-labelledby="priority-modal-title-{{ group.tier }}">
+      <div class="modal-backdrop" data-close-modal></div>
+      <section class="modal-panel">
+        <div class="modal-header">
+          <div>
+            <div class="tier-pill">Priority {{ group.display_order }}</div>
+            <h2 class="modal-title" id="priority-modal-title-{{ group.tier }}">{{ group.label }}</h2>
+            <p class="modal-copy">
+              {{ group.count }} source{{ group.count|pluralize }} surfaced for this priority.
+            </p>
+          </div>
+          <button class="modal-close" type="button" data-close-modal>Close</button>
+        </div>
+
+        <div class="modal-body">
+          {% if group.resources %}
+            {% for resource in group.resources %}
+              <article class="resource-card">
+                <div class="resource-top">
+                  <div>
+                    <h3>{{ resource.name }}</h3>
+                    <div class="resource-meta" style="margin-top: 10px;">
+                      <span class="category-pill">{{ resource.category }}</span>
+                      <span class="reliability-pill" style="border-color: {{ resource.reliability_meta.color }}; color: {{ resource.reliability_meta.color }};">
+                        {{ resource.reliability_meta.label }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {% if resource.description %}
+                  <p class="resource-body">{{ resource.description }}</p>
+                {% endif %}
+
+                <div class="resource-grid">
+                  {% if resource.address %}
+                    <div>
+                      <span class="field-label">Address</span>
+                      <div class="field-value">{{ resource.address }}</div>
+                    </div>
+                  {% endif %}
+                  {% if resource.phone_number %}
+                    <div>
+                      <span class="field-label">Phone</span>
+                      <div class="field-value">{{ resource.phone_number }}</div>
+                    </div>
+                  {% endif %}
+                  {% if resource.days %}
+                    <div>
+                      <span class="field-label">Hours / Availability</span>
+                      <div class="field-value">{{ resource.days }}</div>
+                    </div>
+                  {% endif %}
+                  {% if resource.restrictions %}
+                    <div>
+                      <span class="field-label">Restrictions</span>
+                      <div class="field-value">{{ resource.restrictions }}</div>
+                    </div>
+                  {% endif %}
+                  <div>
+                    <span class="field-label">Reliability</span>
+                    <div class="field-value">{{ resource.reliability_meta.label }}</div>
+                  </div>
+                </div>
+
+                {% if resource.condensed_reliability_description %}
+                  <div class="resource-wide-field">
+                    <span class="field-label">Reliability Notes</span>
+                    <div class="field-value">{{ resource.condensed_reliability_description }}</div>
+                  </div>
+                {% endif %}
+
+                {% if resource.warning_note %}
+                  <div class="warning-note">{{ resource.warning_note }}</div>
+                {% endif %}
+
+                <div class="resource-actions">
+                  <a class="action-link primary" href="{{ resource.directions_url }}" target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
+                  {% if resource.link %}
+                    <a class="action-link secondary" href="{{ resource.link }}" target="_blank" rel="noopener noreferrer">Visit site</a>
+                  {% endif %}
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <article class="empty-card">
+              <h3>No strong matches surfaced yet</h3>
+              <p>
+                This priority came from your answers, but the current dataset did not surface a close resource match for it in this pass.
+              </p>
+            </article>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+  {% endfor %}
+
+  <script>
+    (function () {
+      const body = document.body;
+      const modalTriggers = document.querySelectorAll('[data-modal-target]');
+      const modals = document.querySelectorAll('.modal-shell');
+      let activeModal = null;
+
+      function closeModal() {
+        if (!activeModal) return;
+        activeModal.classList.remove('open');
+        body.classList.remove('modal-open');
+        activeModal = null;
+      }
+
+      function openModal(id) {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        activeModal = modal;
+        modal.classList.add('open');
+        body.classList.add('modal-open');
+      }
+
+      modalTriggers.forEach((trigger) => {
+        trigger.addEventListener('click', function () {
+          openModal(trigger.getAttribute('data-modal-target'));
+        });
+      });
+
+      modals.forEach((modal) => {
+        modal.querySelectorAll('[data-close-modal]').forEach((closer) => {
+          closer.addEventListener('click', closeModal);
+        });
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+          closeModal();
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

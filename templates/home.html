@@ -4,6 +4,9 @@
   <meta charset="utf-8" />
   <title>Baltimore Lifeline</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="/static/BaltimoreLifelineIcon.png?v=3">
+  <link rel="shortcut icon" href="/static/BaltimoreLifelineIcon.png?v=3">
+  <link rel="apple-touch-icon" href="/static/BaltimoreLifelineIcon.png?v=3">
 
   <style>
     :root {
@@ -125,7 +128,7 @@
       animation: fadeUp 800ms ease forwards 360ms;
     }
     .cta-card h3 {
-      margin: 0 0 10px 0;
+      margin: 0;
       font-size: 1.15rem;
       font-weight: 800;
       letter-spacing: 0.2px;
@@ -143,6 +146,22 @@
       font-weight: 700;
       letter-spacing: 0.04em;
       text-transform: uppercase;
+    }
+    .eyebrow-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 10px 0 12px;
+    }
+    .eyebrow-group .eyebrow {
+      margin-bottom: 0;
+    }
+    .eyebrow-beta {
+      background: rgba(251,191,36,0.12);
+      border-color: rgba(251,191,36,0.26);
+      color: #fde68a;
     }
     .cta-card p {
       margin: 0 0 16px 0;
@@ -169,6 +188,15 @@
       width: min(220px, 72%);
       height: auto;
       filter: drop-shadow(0 14px 28px rgba(0,0,0,0.28));
+    }
+    .cta-visual svg.visual-map {
+      width: min(204px, 64%);
+    }
+    .cta-visual svg.visual-guided {
+      width: min(198px, 68%);
+    }
+    .cta-visual svg.visual-community {
+      width: min(194px, 66%);
     }
     .cta-link {
       display: inline-flex;
@@ -559,9 +587,12 @@
       <div class="cta-grid" aria-label="Primary actions">
         <div class="cta-card">
           <h3>Browse the Map</h3>
+          <div class="eyebrow-group">
+            <span class="eyebrow">Explore</span>
+          </div>
           <p>See all nearby resources instantly.</p>
           <div class="cta-visual" aria-hidden="true">
-            <svg viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg class="visual-map" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M32 44L88 24L152 42L208 22V136L152 156L88 138L32 158V44Z" fill="rgba(15,23,42,0.92)" stroke="rgba(148,163,184,0.45)" stroke-width="3" stroke-linejoin="round"/>
               <path d="M88 24V138" stroke="rgba(148,163,184,0.32)" stroke-width="3"/>
               <path d="M152 42V156" stroke="rgba(148,163,184,0.32)" stroke-width="3"/>
@@ -589,18 +620,23 @@
           </a>
         </div>
         <div class="cta-card">
-          <span class="eyebrow">Guided</span>
           <h3>Get Guided Help</h3>
-          <p>Answer a short triage questionnaire and get a personalized help plan ranked by urgency, fit, and nearby options.</p>
-          <span class="spacer"></span>
-          <div class="cta-status" aria-label="Guided triage is live">
-            <div class="cta-status-title">
-              <span class="status-dot" aria-hidden="true" style="background:#22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,0.18);"></span>
-              <span>Live Triage Flow</span>
-            </div>
-            <p>
-              The questionnaire now prioritizes safety, immediate needs, and longer-term support before suggesting matching resources.
-            </p>
+          <div class="eyebrow-group">
+            <span class="eyebrow">Guided</span>
+            <span class="eyebrow eyebrow-beta">New + Beta</span>
+          </div>
+          <p>Answer a short triage and get a ranked help plan.</p>
+          <div class="cta-visual" aria-hidden="true">
+            <svg class="visual-guided" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="58" y="28" width="124" height="124" rx="24" fill="rgba(15,23,42,0.92)" stroke="rgba(148,163,184,0.28)" stroke-width="3"/>
+              <rect x="80" y="54" width="80" height="18" rx="9" fill="rgba(56,189,248,0.16)" stroke="rgba(56,189,248,0.34)"/>
+              <rect x="80" y="84" width="60" height="14" rx="7" fill="rgba(148,163,184,0.18)"/>
+              <rect x="80" y="108" width="48" height="14" rx="7" fill="rgba(148,163,184,0.18)"/>
+              <path d="M151 87L161 97L180 72" stroke="#34d399" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="70" cy="62" r="10" fill="#38bdf8"/>
+              <circle cx="70" cy="92" r="10" fill="#10b981"/>
+              <circle cx="70" cy="116" r="10" fill="#22d3ee"/>
+            </svg>
           </div>
           <span class="spacer"></span>
           <a class="cta-link" href="{% url 'questionnaire' %}">
@@ -611,18 +647,22 @@
           </a>
         </div>
         <div class="cta-card">
-          <span class="eyebrow">Community</span>
           <h3>Share Feedback</h3>
-          <p>Post suggestions, corrections, bug reports, or service experiences in the community board.</p>
-          <span class="spacer"></span>
-          <div class="cta-status" aria-label="Community feedback board">
-            <div class="cta-status-title">
-              <span class="status-dot" aria-hidden="true" style="background:#22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,0.18);"></span>
-              <span>Open Board</span>
-            </div>
-            <p>
-              Leave feedback that can help improve listings, accuracy, and the overall user experience.
-            </p>
+          <div class="eyebrow-group">
+            <span class="eyebrow">Community</span>
+            <span class="eyebrow eyebrow-beta">New + Beta</span>
+          </div>
+          <p>Share corrections, bug reports, and service experiences.</p>
+          <div class="cta-visual" aria-hidden="true">
+            <svg class="visual-community" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M58 58C58 45.8 67.8 36 80 36H160C172.2 36 182 45.8 182 58V104C182 116.2 172.2 126 160 126H120L89 145V126H80C67.8 126 58 116.2 58 104V58Z" fill="rgba(15,23,42,0.92)" stroke="rgba(148,163,184,0.3)" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M84 68H156" stroke="rgba(56,189,248,0.62)" stroke-width="6" stroke-linecap="round"/>
+              <path d="M84 90H146" stroke="rgba(148,163,184,0.52)" stroke-width="6" stroke-linecap="round"/>
+              <path d="M84 112H130" stroke="rgba(148,163,184,0.38)" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="168" cy="48" r="14" fill="#10b981"/>
+              <path d="M161 48H175" stroke="#06261d" stroke-width="4" stroke-linecap="round"/>
+              <path d="M168 41V55" stroke="#06261d" stroke-width="4" stroke-linecap="round"/>
+            </svg>
           </div>
           <span class="spacer"></span>
           <a class="cta-link" href="{% url 'community' %}">

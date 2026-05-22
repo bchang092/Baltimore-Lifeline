@@ -101,4 +101,12 @@ STORAGES = {
     },
 }
 
+# In local development this project often runs with DEBUG disabled, which would
+# otherwise make WhiteNoise look only inside STATIC_ROOT. Allowing finders keeps
+# /static assets such as the favicon available directly from /static without
+# requiring collectstatic on every small asset change.
+if not DATABASE_URL:
+    WHITENOISE_USE_FINDERS = True
+    WHITENOISE_AUTOREFRESH = True
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

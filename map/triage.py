@@ -678,7 +678,7 @@ def _group_resources_by_priority(resources):
 
 def _build_display_groups(tag_bundle, ranked_resources):
     display_groups = []
-    for group in tag_bundle["priority_groups"]:
+    for display_order, group in enumerate(tag_bundle["priority_groups"], start=1):
         tier_resources = [
             resource
             for resource in ranked_resources
@@ -686,10 +686,11 @@ def _build_display_groups(tag_bundle, ranked_resources):
         ]
         display_groups.append(
             {
+                "display_order": display_order,
                 "tier": group["tier"],
                 "label": group["label"],
                 "tags": group["tags"],
-                "resources": tier_resources[:8],
+                "resources": tier_resources,
                 "count": len(tier_resources),
             }
         )

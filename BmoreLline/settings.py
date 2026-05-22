@@ -70,7 +70,7 @@ if DATABASE_URL:
             conn_max_age=600,
             ssl_require=True  # OK for Postgres
         )
-    }
+    } 
 else:
     # Local dev – use SQLite without sslmode
     DATABASES = {

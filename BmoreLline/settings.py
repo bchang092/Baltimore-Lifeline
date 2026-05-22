@@ -91,20 +91,31 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'               # <-- fixed typo
 STATICFILES_DIRS = [BASE_DIR / 'static']             # if you have a /static directory
 
-# WhiteNoise storage (Django 4/5+)
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+# WhiteNoise / static storage:
+# - production uses manifest storage for hashed, cacheable assets
+# - local development uses plain staticfiles storage so admin/assets work
+#   without requiring collectstatic first
+if DATABASE_URL:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
 
-# In local development this project often runs with DEBUG disabled, which would
-# otherwise make WhiteNoise look only inside STATIC_ROOT. Allowing finders keeps
-# /static assets such as the favicon available directly from /static without
-# requiring collectstatic on every small asset change.
+# In local development this project often runs with DEBUG disabled, so let
+# WhiteNoise resolve assets directly from STATICFILES_DIRS and app static dirs.
 if not DATABASE_URL:
     WHITENOISE_USE_FINDERS = True
     WHITENOISE_AUTOREFRESH = True

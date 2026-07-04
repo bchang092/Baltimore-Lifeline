@@ -414,6 +414,125 @@
       height: 18px;
     }
 
+    .partner-band {
+      padding: 18px 20px 12px;
+      position: relative;
+    }
+    .partner-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.8fr);
+      gap: 28px;
+      align-items: center;
+      padding: 30px 32px;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,0.12), transparent 30%),
+        linear-gradient(135deg, rgba(10,18,32,0.96), rgba(17,24,39,0.92));
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 20px 44px rgba(0,0,0,0.24);
+      overflow: hidden;
+    }
+    .partner-card h2 {
+      margin: 0 0 12px;
+      font-size: clamp(1.7rem, 3.4vw, 2.35rem);
+      line-height: 1.1;
+      color: #f8fafc;
+    }
+    .partner-card p {
+      margin: 0 0 18px;
+      color: #cbd5e1;
+      font-size: 1rem;
+      line-height: 1.72;
+      max-width: 640px;
+    }
+    .partner-logo-shell {
+      display: grid;
+      place-items: center;
+      min-height: 170px;
+      padding: 24px;
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03)),
+        rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .partner-logo {
+      width: min(100%, 300px);
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 14px 26px rgba(0,0,0,0.22));
+    }
+    .button-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .button-link,
+    .button-link-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 46px;
+      padding: 11px 18px;
+      border-radius: 999px;
+      font-weight: 800;
+      text-decoration: none;
+      transition: transform .2s ease, filter .2s ease, border-color .2s ease;
+    }
+    .button-link {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #081018;
+      box-shadow: 0 10px 24px rgba(56,189,248,0.18);
+    }
+    .button-link-secondary {
+      color: #dbeafe;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+    }
+    .button-link:hover,
+    .button-link-secondary:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }
+    .button-link svg,
+    .button-link-secondary svg {
+      width: 18px;
+      height: 18px;
+    }
+    .project-cta {
+      padding: 24px 20px 106px;
+      position: relative;
+    }
+    .project-cta-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) auto;
+      gap: 24px;
+      align-items: center;
+      padding: 30px 32px;
+      border-radius: 26px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.025)),
+        rgba(17,24,39,0.92);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 18px 38px rgba(0,0,0,0.22);
+      text-align: left;
+    }
+    .project-cta-copy h2 {
+      margin: 0 0 12px;
+      font-size: clamp(1.65rem, 3.2vw, 2.2rem);
+      line-height: 1.14;
+      color: #f8fafc;
+    }
+    .project-cta-copy p {
+      margin: 0;
+      max-width: 720px;
+      color: #cbd5e1;
+      font-size: 1rem;
+      line-height: 1.72;
+    }
+
     .disclaimer-note {
       margin: 38px auto 0;
       max-width: 900px;
@@ -534,6 +653,21 @@
       .process-step {
         min-height: auto;
       }
+      .partner-band {
+        padding: 12px 18px 8px;
+      }
+      .partner-card,
+      .project-cta-panel {
+        grid-template-columns: 1fr;
+        padding: 24px 20px;
+        text-align: left;
+      }
+      .partner-logo-shell {
+        min-height: 140px;
+      }
+      .project-cta {
+        padding: 18px 18px 92px;
+      }
     }
 
     /* Hero links */
@@ -572,7 +706,7 @@
 
         <div class="hero-links">
           <a class="ghost-link" href="#actions">See more ↓</a>
-          <a class="ghost-link" href="#about">Learn more about us</a>
+          <a class="ghost-link" href="{% url 'about' %}">About the project</a>
         </div>
       </div>
     </div>
@@ -747,50 +881,60 @@
     </div>
   </section>
 
-  <!-- ABOUT -->
-  <section id="about" class="about">
+  <section class="partner-band">
     <div class="container">
-      <h2 class="reveal">About Us</h2>
-      <p class="reveal">
-        Baltimore Lifeline is a volunteer-driven effort to connect residents with critical services.
-        Our interactive map highlights clinics, food resources, and legal aid—curated for clarity and speed.
-      </p>
-      <p class="reveal">
-        Baltimore Lifeline Project is a student-led resource navigation platform co-founded by Sonya Zhang and Brandon Chang.
-        Our official site is
-        <a href="https://www.baltimorelifeline.site/" target="_blank" rel="noopener noreferrer">https://www.baltimorelifeline.site/</a>.
-        We are not affiliated with Lifeline Sites or baltimorelifeline.com.
-      </p>
-      <p class="reveal">
-        We believe access should be simple. If you have suggestions or updates, we’d love to hear from you.
-      </p>
-      <p class="disclaimer-note reveal">
-        <strong>Reliability note:</strong> our reliability descriptions are based on what we found across calls, forums, online reviews, public listings, and similar sources at the time of review, with AI used to help review and verify source patterns. Services can change, staff can change, and experiences can vary. If you find information that differs from what is shown here, treat our summary as the predominant pattern we found rather than a guarantee of current conditions.
-      </p>
-
-      <div class="transparency-panel reveal">
-        <h3>Transparency: How We Verify Sources</h3>
-        <p>
-          We want people to understand how resources are identified and reviewed. Our process combines manual research, AI-assisted search support, and direct human verification before information is retained in our dataset.
-        </p>
-
-        <div class="process-grid">
-          <div class="process-step">
-            <span>1</span>
-            <h4>Manual Source Discovery</h4>
-            <p>We manually scour public information sources to identify organizations, services, and programs that may be relevant to Baltimore residents.</p>
+      <div class="partner-card reveal">
+        <div>
+          <span class="eyebrow">Collaboration</span>
+          <h2>Built in collaboration with Path to Success</h2>
+          <p>
+            We are proud to collaborate with Path to Success, a platform focused on helping people identify their goals and build personalized next-step plans.
+          </p>
+          <div class="button-row">
+            <a class="button-link" href="https://www.pathtosuccessplan.com/" target="_blank" rel="noopener noreferrer">
+              Visit Path to Success
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 17L17 7M9 7H17V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
           </div>
-          <div class="process-step">
-            <span>2</span>
-            <h4>Structured Review Search</h4>
-            <p>We use Seraphina Cyber Scraper to guide a broad, structured web search for reviews, public feedback, and other signals that help us understand how a service is described and experienced.</p>
-          </div>
-        <div class="process-step">
-          <span>3</span>
-          <h4>Human Verification & Model Feedback</h4>
-          <p>Each entry is manually checked by our team, and verified findings are fed back into the base model to improve how future sources are evaluated.</p>
+        </div>
+        <div class="partner-logo-shell">
+          <img
+            class="partner-logo"
+            src="https://static.wixstatic.com/media/4118d7_2230a7df210a4ce9a4e5512a99cf509c~mv2.png/v1/fill/w_280,h_58,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Path%20to%20Success_Artboard%20%20%281%29_edited.png"
+            alt="Path to Success logo"
+            loading="lazy"
+          >
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="project-cta">
+    <div class="container">
+      <div class="project-cta-panel reveal">
+        <div class="project-cta-copy">
+          <span class="eyebrow">About Baltimore Lifeline</span>
+          <h2>Read the full story on a dedicated page</h2>
+          <p>
+            Learn who built the project, how we verify resource information, and why Baltimore Lifeline exists without crowding the homepage.
+          </p>
+        </div>
+        <div class="button-row">
+          <a class="button-link" href="{% url 'about' %}">
+            Go to About Us
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12H19M13 6L19 12L13 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <a class="button-link-secondary" href="{% url 'resources_map' %}">
+            Open the Map
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12H19M13 6L19 12L13 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
       </div>
     </div>
   </section>

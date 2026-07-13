@@ -358,25 +358,6 @@ def home_page(request):
 
 
 FEATURE_PAGES = {
-    "data-quality": {
-        "eyebrow": "Data Quality",
-        "title": "Up-to-date Data",
-        "summary": "We keep resource information current through repeated review, verification, and cleanup so people are not sent in the wrong direction.",
-        "intro": (
-            "Good resource directories fail when they go stale. Baltimore Lifeline is built around"
-            " the idea that accuracy matters as much as access, so we continuously review listings"
-            " and update details when better information is available."
-        ),
-        "highlights": [
-            "We review addresses, phone numbers, links, and service descriptions before listings remain in our working dataset.",
-            "When public information conflicts, we look for the strongest available source trail rather than copying a single listing blindly.",
-            "Reliability notes are meant to summarize patterns we found during review, not to overstate certainty where conditions may still change.",
-        ],
-        "commitment_title": "Why this matters",
-        "commitment_body": (
-            "People using this tool are often making decisions under pressure. Clearer, cleaner, and more current listings reduce wasted time and help residents reach the right service faster."
-        ),
-    },
     "mobile-first": {
         "eyebrow": "Accessibility",
         "title": "Mobile-first",

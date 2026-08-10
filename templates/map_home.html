@@ -638,6 +638,9 @@
     .toolbar-row input { width:100%; min-width:0; text-overflow:ellipsis; }
     .toolbar-row #resetBtn,.toolbar-row #filterToggle,.toolbar-row #filterHide { display:flex!important; flex:0 0 auto!important; align-items:center; justify-content:center; white-space:nowrap; }
     .rail__safety { z-index:500; }
+    /* The resource sheet must never render as an empty, standalone "Details" panel. */
+    .sidebar[aria-hidden="true"] { display:none!important; }
+    .sidebar[aria-hidden="false"] { display:flex!important; }
     .filter-sheet-head,.filter-scrim { display:none; }
     @media(max-width:1100px){ .toolbar-row{grid-template-columns:minmax(0,1fr) auto auto}.toolbar-row #filterHide{display:none!important} }
     @media(max-width:860px){ .map-toolbar{left:12px;right:12px;top:calc(var(--header-h) + 12px);width:auto;max-width:none}.toolbar-row{grid-template-columns:minmax(0,1fr) auto;height:48px}.toolbar-row #resetBtn{display:none!important} }

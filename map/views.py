@@ -2,7 +2,7 @@ from pathlib import Path
 import math
 
 from django.conf import settings
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
@@ -354,7 +354,17 @@ def resources_map(request):
 
 
 def home_page(request):
-    return render(request, "home.html")
+    feedback_items = list(
+        CommunityFeedback.objects.filter(approved=True)
+        .order_by("-created_at")
+        .values("title", "body")[:3]
+    )
+    return render(request, "home.html", {"feedback_items": feedback_items})
+
+
+def resource_count(request):
+    resources, _diag = _load_resources_from_xlsx()
+    return JsonResponse({"count": len(resources)})
 
 
 FEATURE_PAGES = {
@@ -374,6 +384,7 @@ FEATURE_PAGES = {
         "commitment_body": (
             "If a resource tool only works well on a large screen, it fails many of the people who need it most. A mobile-first approach keeps access practical in real-world conditions."
         ),
+        "ctas": [{"label": "Open the map", "url_name": "resources_map", "primary": False}],
     },
     "community-led": {
         "eyebrow": "Community Input",
@@ -391,6 +402,10 @@ FEATURE_PAGES = {
         "commitment_body": (
             "A useful directory should evolve with the people who rely on it. Community feedback helps us catch omissions, improve clarity, and focus on what is actually useful on the ground."
         ),
+        "ctas": [
+            {"label": "Send feedback", "url_name": "community", "primary": True},
+            {"label": "Open the map", "url_name": "resources_map", "primary": False},
+        ],
     },
 }
 
@@ -506,6 +521,7 @@ def questionnaire_page(request):
 
         resources, _diag = _load_resources_from_xlsx()
         triage_result = build_triage_result(answers, resources)
+        triage_result["total_recommended"] = triage_result["resource_count"]
         triage_result["default_assumptions"] = default_assumptions
         triage_result["default_assumption_count"] = len(default_assumptions)
 
@@ -527,7 +543,13 @@ def about_page(request):
 
 
 def community_page(request):
-    categories = CommunityFeedback.CATEGORY_CHOICES
+    category_labels = dict(CommunityFeedback.CATEGORY_CHOICES)
+    categories = [
+        (CommunityFeedback.CATEGORY_CORRECTION, category_labels[CommunityFeedback.CATEGORY_CORRECTION]),
+        (CommunityFeedback.CATEGORY_SUGGESTION, category_labels[CommunityFeedback.CATEGORY_SUGGESTION]),
+        (CommunityFeedback.CATEGORY_EXPERIENCE, category_labels[CommunityFeedback.CATEGORY_EXPERIENCE]),
+        (CommunityFeedback.CATEGORY_BUG, category_labels[CommunityFeedback.CATEGORY_BUG]),
+    ]
     active_category = (request.GET.get("category") or "").strip()
     form_data = {
         "name": "",
@@ -570,11 +592,9 @@ def community_page(request):
             return redirect(redirect_url)
 
     valid_categories = {value for value, _label in categories}
-    posts = CommunityFeedback.objects.all()
-    if active_category in valid_categories:
-        posts = posts.filter(category=active_category)
-    else:
+    if active_category not in valid_categories:
         active_category = ""
+    posts = CommunityFeedback.objects.all().order_by("-created_at")
 
     return render(
         request,

@@ -1,678 +1,137 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Baltimore Lifeline - Your Help Plan</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" type="image/png" href="/static/BaltimoreLifelineIcon.png?v=3">
-  <link rel="shortcut icon" href="/static/BaltimoreLifelineIcon.png?v=3">
-  <link rel="apple-touch-icon" href="/static/BaltimoreLifelineIcon.png?v=3">
-
-  <style>
-    :root {
-      --bg: #0f172a;
-      --bg-2: #0b1220;
-      --panel: rgba(17,24,39,0.92);
-      --panel-soft: rgba(15,23,42,0.8);
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --accent: #38bdf8;
-      --accent-2: #10b981;
-      --border: rgba(255,255,255,0.08);
-      --shadow: rgba(0,0,0,0.38);
-    }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; }
-    body {
-      background:
-        radial-gradient(850px 560px at 12% -10%, rgba(56,189,248,0.16), transparent),
-        radial-gradient(950px 640px at 108% 10%, rgba(16,185,129,0.15), transparent),
-        linear-gradient(180deg, var(--bg), var(--bg-2) 70%);
-      color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, sans-serif;
-      line-height: 1.5;
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-    }
-    body.modal-open {
-      overflow: hidden;
-    }
-    .container {
-      max-width: 1160px;
-      margin: 0 auto;
-      padding: 28px 24px 84px;
-    }
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 22px;
-      flex-wrap: wrap;
-    }
-    .brand {
-      font-weight: 800;
-      font-size: 1rem;
-      letter-spacing: 0.02em;
-    }
-    .brand span { color: var(--accent); }
-    .nav-links {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .back-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 9px 14px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(22,31,49,0.9), rgba(12,18,31,0.86));
-      color: var(--text);
-      font: inherit;
-      font-size: 0.9rem;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-    }
-    .back-btn svg {
-      width: 16px;
-      height: 16px;
-    }
-    .ghost-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 9px 14px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(17,24,39,0.7);
-      color: var(--text);
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 650;
-    }
-    .home-icon-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: rgba(15,23,42,0.96);
-      color: var(--text);
-      text-decoration: none;
-    }
-    .home-icon-link svg {
-      width: 18px;
-      height: 18px;
-      display: block;
-    }
-    .hero {
-      background: rgba(17,24,39,0.9);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 28px 24px 24px;
-      box-shadow: 0 10px 28px var(--shadow);
-      margin-bottom: 26px;
-    }
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: rgba(56,189,248,0.12);
-      border: 1px solid rgba(56,189,248,0.24);
-      color: #bae6fd;
-      font-size: 0.78rem;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-    }
-    .hero h1 {
-      margin: 0 0 12px;
-      font-size: clamp(2.4rem, 5vw, 4rem);
-      line-height: 1.02;
-      letter-spacing: -0.035em;
-    }
-    .hero p {
-      margin: 0;
-      max-width: 720px;
-      color: #cbd5e1;
-      font-size: 1.04rem;
-      line-height: 1.72;
-    }
-    .crisis-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 18px;
-      margin-bottom: 34px;
-    }
-    .crisis-card {
-      background: linear-gradient(180deg, rgba(127,29,29,0.18), rgba(17,24,39,0.9));
-      border: 1px solid rgba(239,68,68,0.28);
-      border-radius: 24px;
-      box-shadow: 0 10px 26px var(--shadow);
-      padding: 24px 22px 22px;
-    }
-    .crisis-card h2 {
-      margin: 0 0 10px;
-      font-size: 1.3rem;
-      line-height: 1.14;
-      color: #fecaca;
-    }
-    .crisis-card p {
-      margin: 0 0 16px;
-      color: #fee2e2;
-      font-size: 0.98rem;
-      line-height: 1.68;
-    }
-    .crisis-link,
-    .action-link,
-    .modal-close {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 11px 14px;
-      border-radius: 14px;
-      text-decoration: none;
-      font-weight: 800;
-    }
-    .crisis-link {
-      background: rgba(239,68,68,0.18);
-      border: 1px solid rgba(239,68,68,0.3);
-      color: #fee2e2;
-    }
-    .section-heading {
-      margin: 0 0 8px;
-      font-size: clamp(1.95rem, 3vw, 2.7rem);
-      line-height: 1.08;
-      letter-spacing: -0.035em;
-    }
-    .section-copy {
-      margin: 0 0 26px;
-      max-width: 760px;
-      color: var(--muted);
-      font-size: 1rem;
-      line-height: 1.72;
-    }
-    .priority-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 18px;
-    }
-    .priority-card {
-      width: 100%;
-      text-align: left;
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      background: var(--panel);
-      color: var(--text);
-      box-shadow: 0 10px 26px var(--shadow);
-      padding: 22px 20px 20px;
-      cursor: pointer;
-      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
-    }
-    .priority-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(56,189,248,0.24);
-      background: rgba(20,30,46,0.96);
-    }
-    .priority-card:focus-visible {
-      outline: 2px solid rgba(56,189,248,0.32);
-      outline-offset: 3px;
-    }
-    .priority-title {
-      margin: 0;
-      font-size: 1.65rem;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-    }
-    .priority-copy {
-      margin: 12px 0 0;
-      color: var(--muted);
-      font-size: 0.98rem;
-      line-height: 1.68;
-    }
-    .priority-meta {
-      margin-top: 16px;
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: end;
-      flex-wrap: wrap;
-    }
-    .priority-count {
-      color: #dbeafe;
-      font-size: 0.96rem;
-      font-weight: 700;
-    }
-    .priority-open {
-      color: #7dd3fc;
-      font-size: 0.9rem;
-      font-weight: 700;
-    }
-    .tier-pill,
-    .match-pill,
-    .category-pill,
-    .reliability-pill {
-      display: inline-flex;
-      align-items: center;
-      padding: 5px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      font-size: 0.78rem;
-      font-weight: 750;
-      letter-spacing: 0.01em;
-    }
-    .tier-pill {
-      color: #dbeafe;
-      background: rgba(56,189,248,0.1);
-      border-color: rgba(56,189,248,0.24);
-      margin-bottom: 12px;
-    }
-    .match-pills,
-    .resource-meta,
-    .resource-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .match-pills {
-      margin-top: 12px;
-    }
-    .match-pill {
-      background: rgba(255,255,255,0.04);
-      color: #dbeafe;
-    }
-    .category-pill {
-      background: rgba(56,189,248,0.12);
-      border-color: rgba(56,189,248,0.22);
-      color: #93c5fd;
-    }
-    .modal-shell {
-      position: fixed;
-      inset: 0;
-      z-index: 3000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-    .modal-shell.open {
-      display: flex;
-    }
-    .modal-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(5,10,18,0.7);
-      backdrop-filter: blur(6px);
-    }
-    .modal-panel {
-      position: relative;
-      width: min(980px, 100%);
-      max-height: min(88vh, 920px);
-      background: rgba(11,18,32,0.96);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 28px;
-      box-shadow: 0 18px 60px rgba(0,0,0,0.45);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-    .modal-header {
-      padding: 24px 24px 18px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(17,24,39,0.82);
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      align-items: start;
-      flex-wrap: wrap;
-    }
-    .modal-title {
-      margin: 0;
-      font-size: clamp(1.8rem, 3.2vw, 2.4rem);
-      line-height: 1.05;
-      letter-spacing: -0.035em;
-    }
-    .modal-copy {
-      margin: 12px 0 0;
-      color: #cbd5e1;
-      font-size: 0.98rem;
-      line-height: 1.7;
-      max-width: 680px;
-    }
-    .modal-close {
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.04);
-      color: var(--text);
-      cursor: pointer;
-      flex: 0 0 auto;
-    }
-    .modal-body {
-      padding: 20px 24px 24px;
-      overflow-y: auto;
-      display: grid;
-      gap: 14px;
-    }
-    .resource-card,
-    .empty-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.22);
-      padding: 20px 18px 18px;
-    }
-    .resource-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 14px;
-      align-items: start;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
-    .resource-card h3,
-    .empty-card h3 {
-      margin: 0;
-      font-size: 1.14rem;
-      line-height: 1.32;
-      letter-spacing: -0.015em;
-    }
-    .resource-body,
-    .empty-card p {
-      margin: 0 0 14px;
-      color: #d3dae4;
-      font-size: 0.96rem;
-      line-height: 1.68;
-    }
-    .resource-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 10px 16px;
-      margin-bottom: 14px;
-    }
-    .resource-wide-field {
-      margin: 0 0 14px;
-    }
-    .field-label {
-      display: block;
-      margin-bottom: 4px;
-      color: var(--muted);
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .field-value {
-      color: #dbe4ef;
-      font-size: 0.94rem;
-      line-height: 1.6;
-    }
-    .warning-note {
-      margin: 0 0 14px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      background: rgba(245,158,11,0.12);
-      border: 1px solid rgba(245,158,11,0.24);
-      color: #fde68a;
-      font-size: 0.92rem;
-      line-height: 1.6;
-    }
-    .action-link.primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #081018;
-    }
-    .action-link.secondary {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
-    .empty-card p:last-child {
-      margin-bottom: 0;
-    }
-    .empty-state {
-      padding: 24px 22px;
-      border-radius: 24px;
-      background: rgba(15,23,42,0.5);
-      border: 1px dashed rgba(148,163,184,0.22);
-      color: #aeb5c1;
-      line-height: 1.72;
-    }
-    @media (max-width: 760px) {
-      .container { padding: 22px 18px 64px; }
-      .hero h1 { font-size: clamp(2rem, 12vw, 3rem); }
-      .modal-shell { padding: 12px; }
-      .modal-header,
-      .modal-body { padding-left: 18px; padding-right: 18px; }
-    }
-  </style>
+<meta charset="utf-8">
+<title>Baltimore Lifeline - Your Help Plan</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/png" href="/static/BaltimoreLifelineIcon.png?v=3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;600&family=Space+Grotesk:wght@500&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+:root{--bg:#0a141d;--bg-alt:#0c1a25;--border:rgba(125,211,252,.10);--border-mid:rgba(125,211,252,.13);--border-chip:rgba(125,211,252,.22);--border-hair:rgba(125,211,252,.08);--text:#e8f1f5;--text-2:#c7dbe5;--text-3:#9db6c4;--text-4:#8ba3b2;--text-5:#5d7889;--text-6:#3f5766;--accent:#35d6c0;--accent-2:#86efac;--warn:#f0a8a8;--danger:#f87171;--radius:10px;--radius-pill:999px}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",sans-serif}body.sheet-open{overflow:hidden}.page{display:grid;grid-template-columns:300px minmax(0,1fr);min-height:100vh}.rail{background:var(--bg-alt);border-right:1px solid var(--border)}.rail-inner{position:sticky;top:0;min-height:620px;max-height:100vh;overflow:auto;padding:40px 34px 44px;display:flex;flex-direction:column;justify-content:space-between;gap:40px}.mono{font:500 10.5px/1.2 "IBM Plex Mono",monospace;letter-spacing:.18em;text-transform:uppercase}.wordmark{color:var(--text);text-decoration:none}.plan-label,.nav-label{color:var(--text-5);font-size:10px}.stats{display:grid;gap:8px;margin-top:14px}.stat{display:flex;align-items:baseline;gap:10px;color:var(--text-4);font-size:14px}.stat b{color:var(--accent);font:500 38px/.9 "Space Grotesk",sans-serif}.stat+ .stat b{color:var(--text)}.priority-nav{margin-top:18px}.priority-nav a{display:grid;grid-template-columns:24px 1fr auto;gap:12px;align-items:baseline;padding:16px 0 16px 18px;border-left:2px solid var(--border-mid);color:var(--text-4);font-size:14.5px;line-height:1.35;text-decoration:none}.priority-nav a.active{border-left-color:var(--accent);color:#fff}.priority-nav a:hover{color:var(--text-2);border-left-color:rgba(53,214,192,.5)}.priority-nav small{color:var(--text-5);font:500 10px "IBM Plex Mono",monospace}.rail-bottom{display:grid;gap:24px}.retake{color:var(--text-2);font-size:13.5px;text-decoration:none}.safety{margin:0;padding-left:16px;border-left:2px solid var(--danger);color:#d8c0c0;font-size:12.5px;line-height:1.6}.safety a{color:inherit}.docbar{height:76px;padding:0 72px;border-bottom:1px solid var(--border-hair);display:flex;justify-content:flex-end;align-items:center;gap:10px}.outline{min-height:44px;padding:10px 18px;border:1px solid var(--border-chip);border-radius:var(--radius-pill);color:var(--text-2);font-size:13px;text-decoration:none;background:none}.hero{padding:110px 72px 90px}.hero .mono{color:var(--accent);letter-spacing:.2em}.hero h1{max-width:760px;margin:26px 0 24px;font:500 78px/.96 "Space Grotesk",sans-serif;letter-spacing:-.04em}.hero p{max-width:560px;margin:0;color:var(--text-3);font-size:18px;line-height:1.6}.priority{padding:96px 72px;border-top:1px solid var(--border);scroll-margin-top:24px}.priority:nth-of-type(even){background:var(--bg-alt)}.priority-grid{display:grid;grid-template-columns:1fr 1.5fr;gap:72px}.priority-label{color:#9fc2d1}.priority:first-of-type .priority-label,.priority:first-of-type .open-sheet{color:var(--accent)}.priority h2{margin:18px 0 16px;font:500 44px/1.04 "Space Grotesk",sans-serif;letter-spacing:-.03em}.tags{display:flex;flex-wrap:wrap;gap:7px}.tag,.reliability{padding:6px 11px;border:1px solid var(--border-chip);border-radius:var(--radius-pill);color:var(--text-2);font:500 10px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase}.priority:first-of-type .tag{border-color:rgba(53,214,192,.35);color:var(--accent)}.priority-note{max-width:320px;margin:28px 0;color:var(--text-4);font-size:15.5px;line-height:1.65}.open-sheet,.details{border:0;background:none;padding:0;color:var(--accent);font:600 14px "IBM Plex Sans",sans-serif;cursor:pointer;text-decoration:none}.source-row{display:grid;grid-template-columns:1fr auto;gap:32px;padding:24px 0;border-top:1px solid var(--border)}.source-row h3{margin:0;color:var(--text);font:500 17.5px/1.4 "Space Grotesk",sans-serif}.source-row p{max-width:440px;margin:7px 0;color:var(--text-4);font-size:14.5px;line-height:1.55}.source-meta{display:flex;gap:20px;flex-wrap:wrap;color:var(--text-5);font:500 10.5px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase}.source-side{display:grid;justify-items:end;gap:14px}.reliability.good{border-color:rgba(53,214,192,.30);color:var(--accent)}.reliability.low{border-color:rgba(248,113,113,.32);color:var(--warn)}.more{display:block;padding:22px 0;border-top:1px solid var(--border);color:var(--text-4);font-size:14px;text-decoration:none}.legal{padding:22px 72px 30px;border-top:1px solid var(--border-hair);color:var(--text-6)}.scrim{position:fixed;inset:0;z-index:50;background:rgba(6,15,22,.62);opacity:0;pointer-events:none;transition:opacity 260ms cubic-bezier(.2,.6,.2,1)}.sheet{position:fixed;z-index:60;top:0;right:0;bottom:0;width:min(840px,70vw);display:flex;flex-direction:column;background:var(--bg-alt);border-left:1px solid rgba(53,214,192,.22);box-shadow:-40px 0 90px rgba(0,0,0,.55);transform:translateX(100%);transition:transform 260ms cubic-bezier(.2,.6,.2,1)}.sheet.open{transform:none}.scrim.open{opacity:1;pointer-events:auto}.sheet-head{padding:44px 56px 30px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:32px}.sheet-head .mono{color:var(--accent)}.sheet-head h2{max-width:520px;margin:15px 0 9px;font:500 42px/1.04 "Space Grotesk",sans-serif;letter-spacing:-.03em}.sheet-head p{margin:0;color:var(--text-4);font-size:15px}.sheet-close{min-height:44px;padding:10px 18px;border:1px solid var(--border-chip);border-radius:var(--radius-pill);background:none;color:var(--text-2);cursor:pointer}.sheet-body{flex:1;overflow:auto;overscroll-behavior:contain}.sheet-record{padding:40px 56px 34px;border-bottom:1px solid var(--border)}.sheet-record h3{margin:0 0 14px;font:500 26px/1.25 "Space Grotesk",sans-serif}.sheet-record>p{max-width:560px;color:var(--text-2);font-size:16px;line-height:1.6}.fields{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin:26px 0;padding:26px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}dt{margin-bottom:6px;color:var(--text-5);font:500 9.5px "IBM Plex Mono",monospace;letter-spacing:.16em}dd{margin:0;color:var(--text);font-size:15.5px}.notes{max-width:660px;padding-left:20px;border-left:2px solid rgba(125,211,252,.14);color:var(--text-4);font-size:14.5px;line-height:1.7}.sheet-foot{padding:34px 56px;display:flex;gap:12px;flex-wrap:wrap;background:rgba(10,20,29,.6)}.action{min-height:50px;padding:15px 24px;border-radius:var(--radius);font:600 15px "IBM Plex Sans",sans-serif;text-decoration:none}.action.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#06131a}.action.secondary{border:1px solid var(--border-chip);color:var(--text-2)}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}@media(max-width:1199px){.page{grid-template-columns:260px minmax(0,1fr)}.priority{padding:80px 48px}.priority-grid{grid-template-columns:1fr;gap:40px}.docbar,.hero,.legal{padding-left:48px;padding-right:48px}.sheet{width:min(720px,86vw)}}@media(max-width:899px){.page{display:block}.rail{position:sticky;top:0;z-index:10;border-bottom:1px solid var(--border)}.rail-inner{min-height:0;max-height:none;padding:16px 24px;gap:12px}.rail-inner>div:first-child{display:flex;align-items:center;gap:16px}.stats{display:flex;margin:0;gap:12px}.stat b{font-size:24px}.priority-nav{display:flex;gap:8px;overflow:auto;margin:0}.priority-nav a{display:flex;min-height:38px;padding:8px 12px;border:1px solid var(--border-mid);border-radius:var(--radius-pill);white-space:nowrap}.priority-nav small{display:none}.rail-bottom{display:none}.docbar,.hero,.priority,.legal{padding-left:24px;padding-right:24px}.hero{padding-top:72px;padding-bottom:56px}.hero h1{font-size:44px}.priority{padding-top:56px;padding-bottom:56px}.sheet{top:8vh;width:100%;border-radius:16px 16px 0 0;transform:translateY(100%)}.fields{grid-template-columns:1fr}.sheet-head,.sheet-record,.sheet-foot{padding-left:24px;padding-right:24px}.sheet-foot{display:grid}.action{text-align:center}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
+  .source-row{grid-template-columns:28px 1fr auto;column-gap:28px;padding:30px 0;border-top-color:rgba(125,211,252,.16);transition:background-color .16s ease}.source-row:hover{background:rgba(125,211,252,.028)}.source-row__index{padding-top:3px;color:var(--text-6);font:500 10.5px/1.7 "IBM Plex Mono",monospace;letter-spacing:.08em}.source-row:hover .source-row__index{color:var(--accent)}.source-side{display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:10px;flex:0 0 auto}.reliability,.tag{display:inline-flex;align-items:center;align-self:flex-end;flex:0 0 auto;height:24px;padding:0 10px;border-radius:999px;white-space:nowrap;box-sizing:border-box;font:500 9.5px/1 "IBM Plex Mono",monospace;letter-spacing:.1em}.tags .tag,.tags .reliability{align-self:auto}.source-meta{gap:6px 18px;max-width:620px;line-height:1.5;letter-spacing:.08em}.source-meta>*{display:inline-flex;align-items:center;max-width:34ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.source-meta>*+*::before{content:"";width:3px;height:3px;margin-right:12px;flex:0 0 auto;border-radius:999px;background:rgba(125,211,252,.28)}.source-row p{margin:10px 0 14px}.priority{border-top-color:rgba(125,211,252,.20)}.more{margin-top:4px;padding:22px 0 0;border-top-color:rgba(125,211,252,.28)}.sheet-record{position:relative;padding:40px 56px 36px;border-bottom:0;border-top:1px solid rgba(125,211,252,.16)}.sheet-record:first-child{border-top:0}.sheet-record.is-current{background:rgba(53,214,192,.035)}.sheet-record.is-current::before{content:"";position:absolute;inset:0 auto 0 0;width:2px;background:var(--accent)}.fields{border-color:rgba(125,211,252,.16)}.sheet-body{border-bottom:1px solid rgba(125,211,252,.28)}@media(prefers-reduced-motion:reduce){.source-row{transition:none}}
+  .source-list{display:grid}.source-row:last-of-type{border-bottom:1px solid rgba(125,211,252,.16)}.source-row__meta{display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:10px;flex:0 0 auto}.reliability-pill{align-self:flex-end;flex:0 0 auto;display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;white-space:nowrap;box-sizing:border-box;font:500 9.5px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase}.sheet-record:target{background:rgba(53,214,192,.035)}.record-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:14px}.record-index{color:var(--text-6);font:500 10px "IBM Plex Mono",monospace;letter-spacing:.14em}@media(prefers-reduced-motion:reduce){.source-row:hover{background:none}}
+</style>
+<style>
+  .fields .field-address{grid-column:1/-1}
+  .fields .field-address dd{max-width:100%;line-height:1.55}
+  .sheet{top:var(--header-h)}
+  .sheet-head{align-items:flex-start;padding-top:38px}
+  .sheet-close{align-self:flex-start;min-height:40px;padding:9px 16px;border-radius:8px;line-height:1}
+  @media(max-width:899px){.sheet{top:calc(var(--header-h) + 12px);max-height:calc(100vh - var(--header-h) - 12px)}}
+</style>
 </head>
-<body>
-  <div class="container">
-    <div class="topbar">
-      <div class="brand">Baltimore <span>Lifeline</span></div>
-      <div class="nav-links">
-        <button class="back-btn" type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{% url 'homepage' %}'; }">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 6L9 12L15 18M10 12H21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>Back</span>
-        </button>
-        <a class="ghost-btn" href="{% url 'questionnaire' %}">Retake questionnaire</a>
-        <a class="home-icon-link" href="{% url 'homepage' %}" aria-label="Return to homepage" title="Home">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M3 10.5L12 3L21 10.5V20C21 20.6 20.6 21 20 21H15V14H9V21H4C3.4 21 3 20.6 3 20V10.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-          </svg>
-        </a>
-      </div>
-    </div>
-
-    <section class="hero">
-      <div class="eyebrow">Personalized Help Plan</div>
-      <h1>Your priorities, at a glance</h1>
-      <p>
-        We translated your answers into priority groups. Open any priority to see the matching sources underneath it.
-      </p>
-    </section>
-
-    {% if crisis_actions %}
-      <section class="crisis-grid" aria-label="Urgent crisis actions">
-        {% for action in crisis_actions %}
-          <article class="crisis-card">
-            <h2>{{ action.title }}</h2>
-            <p>{{ action.body }}</p>
-            <a class="crisis-link" href="{{ action.cta_href }}">{{ action.cta_label }}</a>
-          </article>
-        {% endfor %}
-      </section>
-    {% endif %}
-
-    <section>
-      <h2 class="section-heading">Priority Groups</h2>
-      <p class="section-copy">
-        Start with the highest priority. A source may appear in more than one group if it matches multiple needs.
-      </p>
-
-      {% if display_groups %}
-        <div class="priority-grid">
-          {% for group in display_groups %}
-            <button
-              class="priority-card"
-              type="button"
-              data-modal-target="priority-modal-{{ group.tier }}"
-              aria-haspopup="dialog"
-            >
-              <div class="tier-pill">Priority {{ group.display_order }}</div>
-              <h3 class="priority-title">{{ group.label }}</h3>
-              <div class="match-pills">
-                {% for tag in group.tags %}
-                  <span class="match-pill">{{ tag.label }}</span>
-                {% endfor %}
-              </div>
-              <p class="priority-copy">
-                {% if group.count %}
-                  Open this priority to view {{ group.count }} matching source{{ group.count|pluralize }}.
-                {% else %}
-                  No close matches surfaced yet, but you can still open this priority to see the status.
-                {% endif %}
-              </p>
-              <div class="priority-meta">
-                <span class="priority-count">{{ group.count }} source{{ group.count|pluralize }}</span>
-                <span class="priority-open">Open priority</span>
-              </div>
-            </button>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="empty-state">
-          No strong matches surfaced from the current dataset for these answers yet. Try retaking the questionnaire with broader needs selected, or use the full map to browse all resources directly.
-        </div>
-      {% endif %}
-    </section>
-  </div>
-
-  {% for group in display_groups %}
-    <div class="modal-shell" id="priority-modal-{{ group.tier }}" role="dialog" aria-modal="true" aria-labelledby="priority-modal-title-{{ group.tier }}">
-      <div class="modal-backdrop" data-close-modal></div>
-      <section class="modal-panel">
-        <div class="modal-header">
-          <div>
-            <div class="tier-pill">Priority {{ group.display_order }}</div>
-            <h2 class="modal-title" id="priority-modal-title-{{ group.tier }}">{{ group.label }}</h2>
-            <p class="modal-copy">
-              {{ group.count }} source{{ group.count|pluralize }} surfaced for this priority.
-            </p>
-          </div>
-          <button class="modal-close" type="button" data-close-modal>Close</button>
-        </div>
-
-        <div class="modal-body">
-          {% if group.resources %}
-            {% for resource in group.resources %}
-              <article class="resource-card">
-                <div class="resource-top">
-                  <div>
-                    <h3>{{ resource.name }}</h3>
-                    <div class="resource-meta" style="margin-top: 10px;">
-                      <span class="category-pill">{{ resource.category }}</span>
-                      <span class="reliability-pill" style="border-color: {{ resource.reliability_meta.color }}; color: {{ resource.reliability_meta.color }};">
-                        {{ resource.reliability_meta.label }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {% if resource.description %}
-                  <p class="resource-body">{{ resource.description }}</p>
-                {% endif %}
-
-                <div class="resource-grid">
-                  {% if resource.address %}
-                    <div>
-                      <span class="field-label">Address</span>
-                      <div class="field-value">{{ resource.address }}</div>
-                    </div>
-                  {% endif %}
-                  {% if resource.phone_number %}
-                    <div>
-                      <span class="field-label">Phone</span>
-                      <div class="field-value">{{ resource.phone_number }}</div>
-                    </div>
-                  {% endif %}
-                  {% if resource.days %}
-                    <div>
-                      <span class="field-label">Hours / Availability</span>
-                      <div class="field-value">{{ resource.days }}</div>
-                    </div>
-                  {% endif %}
-                  {% if resource.restrictions %}
-                    <div>
-                      <span class="field-label">Restrictions</span>
-                      <div class="field-value">{{ resource.restrictions }}</div>
-                    </div>
-                  {% endif %}
-                  <div>
-                    <span class="field-label">Reliability</span>
-                    <div class="field-value">{{ resource.reliability_meta.label }}</div>
-                  </div>
-                </div>
-
-                {% if resource.condensed_reliability_description %}
-                  <div class="resource-wide-field">
-                    <span class="field-label">Reliability Notes</span>
-                    <div class="field-value">{{ resource.condensed_reliability_description }}</div>
-                  </div>
-                {% endif %}
-
-                {% if resource.warning_note %}
-                  <div class="warning-note">{{ resource.warning_note }}</div>
-                {% endif %}
-
-                <div class="resource-actions">
-                  <a class="action-link primary" href="{{ resource.directions_url }}" target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
-                  {% if resource.link %}
-                    <a class="action-link secondary" href="{{ resource.link }}" target="_blank" rel="noopener noreferrer">Visit site</a>
-                  {% endif %}
-                </div>
-              </article>
-            {% endfor %}
-          {% else %}
-            <article class="empty-card">
-              <h3>No strong matches surfaced yet</h3>
-              <p>
-                This priority came from your answers, but the current dataset did not surface a close resource match for it in this pass.
-              </p>
-            </article>
-          {% endif %}
-        </div>
-      </section>
-    </div>
-  {% endfor %}
-
-  <script>
-    (function () {
-      const body = document.body;
-      const modalTriggers = document.querySelectorAll('[data-modal-target]');
-      const modals = document.querySelectorAll('.modal-shell');
-      let activeModal = null;
-
-      function closeModal() {
-        if (!activeModal) return;
-        activeModal.classList.remove('open');
-        body.classList.remove('modal-open');
-        activeModal = null;
-      }
-
-      function openModal(id) {
-        const modal = document.getElementById(id);
-        if (!modal) return;
-        activeModal = modal;
-        modal.classList.add('open');
-        body.classList.add('modal-open');
-      }
-
-      modalTriggers.forEach((trigger) => {
-        trigger.addEventListener('click', function () {
-          openModal(trigger.getAttribute('data-modal-target'));
-        });
-      });
-
-      modals.forEach((modal) => {
-        modal.querySelectorAll('[data-close-modal]').forEach((closer) => {
-          closer.addEventListener('click', closeModal);
-        });
-      });
-
-      document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
-          closeModal();
-        }
-      });
-    })();
-  </script>
+<body>{% include "partials/site_header.html" %}
+<div class="page" id="page">
+<aside class="rail">
+<div class="rail-inner">
+<div>
+<a class="wordmark mono" href="{% url 'homepage' %}">Baltimore Lifeline</a>
+<div class="stats">
+<span class="plan-label mono">Your plan</span>
+<span class="stat">
+<b>{{ display_groups|length }}</b> groups</span>
+<span class="stat">
+<b>{{ total_recommended|default:0 }}</b> sources</span>
+</div>
+<nav class="priority-nav" aria-label="Priority groups">
+<span class="nav-label mono">Priority groups</span>{% for group in display_groups %}<a href="#priority-{{ group.tier }}"{% if forloop.first %} class="active" aria-current="true"{% endif %}>
+<small>0{{ group.display_order }}</small>
+<span>{{ group.label }}</span>
+<small>{{ group.count }}</small>
+</a>{% endfor %}</nav>
+</div>
+<div class="rail-bottom">
+<a class="retake" href="{% url 'questionnaire' %}">Retake questionnaire →</a>
+<p class="safety">If you are in immediate danger, seriously injured, or cannot stay safe right now, call <a href="tel:911">911</a> immediately. If you are in a mental health or substance-use crisis, call or text <a href="tel:988">988</a>.</p>
+</div>
+</div>
+</aside>
+<main class="doc">
+<header class="docbar">
+<button class="outline" type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='{% url 'homepage' %}'; }">← Back</button>
+<a class="outline" href="{% url 'homepage' %}">Home</a>
+</header>
+<section class="hero">
+<div class="mono">Personalized Help Plan</div>
+<h1>Your priorities, at a glance</h1>
+<p>We translated your answers into priority groups. Open any priority to see the matching sources underneath it.</p>
+</section>{% for group in display_groups %}<section class="priority" id="priority-{{ group.tier }}" aria-labelledby="priority-title-{{ group.tier }}">
+<div class="priority-grid">
+<div>
+<div class="priority-label mono">Priority {{ group.display_order }}</div>
+<h2 id="priority-title-{{ group.tier }}">{{ group.label }}</h2>
+<div class="tags">{% for tag in group.tags %}<span class="tag">{{ tag.label }}</span>{% endfor %}</div>{% if forloop.first %}<p class="priority-note">Start with the highest priority. A source may appear in more than one group if it matches multiple needs.</p>{% endif %}<button class="open-sheet" type="button" data-group="{{ group.tier }}">Open all {{ group.count }} sources →</button>
+</div>
+<div>{% for resource in group.resources|slice:":3" %}<article class="source-row">
+<div>
+<h3>{{ resource.name }}</h3>{% if resource.description %}<p>{{ resource.description }}</p>{% endif %}<div class="source-meta">{% if resource.phone_number %}<span>{{ resource.phone_number }}</span>{% endif %}{% if resource.days %}<span>{{ resource.days }}</span>{% endif %}{% if resource.restrictions %}<span>{{ resource.restrictions }}</span>{% endif %}</div>
+</div>
+<div class="source-side">
+<span class="reliability good">{{ resource.reliability_meta.label }}</span>
+<button class="details" type="button" data-group="{{ group.tier }}" data-source="source-{{ group.tier }}-{{ forloop.counter0 }}">Details →</button>
+</div>
+</article>{% endfor %}{% if group.count > 3 %}<button class="more open-sheet" type="button" data-group="{{ group.tier }}">+ {{ group.count|add:"-3" }} more sources in this group</button>{% endif %}</div>
+</div>
+</section>{% endfor %}<footer class="legal mono">© 2026 Baltimore Lifeline</footer>
+</main>
+</div>
+<div class="scrim" id="scrim">
+</div>{% for group in display_groups %}<aside class="sheet" id="sheet-{{ group.tier }}" role="dialog" aria-modal="true" aria-labelledby="sheet-title-{{ group.tier }}">
+<header class="sheet-head">
+<div>
+<div class="mono">Priority {{ group.display_order }}</div>
+<h2 id="sheet-title-{{ group.tier }}" tabindex="-1">{{ group.label }}</h2>
+<p>{{ group.count }} source{{ group.count|pluralize }} surfaced for this priority.</p>
+</div>
+<button class="sheet-close" type="button">Close</button>
+</header>
+<div class="sheet-body">{% for resource in group.resources %}<article class="sheet-record" id="source-{{ group.tier }}-{{ forloop.counter0 }}" data-directions="{{ resource.directions_url }}" data-site="{{ resource.link|default:'' }}">
+<h3>{{ resource.name }}</h3>
+<div class="tags">
+<span class="tag">{{ resource.category }}</span>
+<span class="reliability good">{{ resource.reliability_meta.label }}</span>
+</div>{% if resource.description %}<p>{{ resource.description }}</p>{% endif %}<dl class="fields">{% if resource.phone_number %}<div>
+<dt>Phone</dt>
+<dd>
+<a href="tel:{{ resource.phone_number }}">{{ resource.phone_number }}</a>
+</dd>
+</div>{% endif %}{% if resource.address %}<div class="field-address">
+<dt>Address</dt>
+<dd>{{ resource.address }}</dd>
+</div>{% endif %}{% if resource.days %}<div>
+<dt>Hours / Availability</dt>
+<dd>{{ resource.days }}</dd>
+</div>{% endif %}{% if resource.restrictions %}<div>
+<dt>Restrictions</dt>
+<dd>{{ resource.restrictions }}</dd>
+</div>{% endif %}</dl>{% if resource.condensed_reliability_description %}<p class="notes">{{ resource.condensed_reliability_description }}</p>{% endif %}</article>{% endfor %}</div>
+<footer class="sheet-foot">
+<a class="action primary" href="#" data-map>Open in Google Maps</a>
+<a class="action secondary" href="#" data-site>Visit site</a>
+</footer>
+</aside>{% endfor %}<script>(function(){const sheets=[...document.querySelectorAll('.sheet')],scrim=document.getElementById('scrim');let active,last;function close(){if(!active)return;active.classList.remove('open');scrim.classList.remove('open');document.body.classList.remove('sheet-open');last&&last.focus();active=null}function open(group,source,trigger){close();active=document.getElementById('sheet-'+group);if(!active)return;last=trigger;active.classList.add('open');scrim.classList.add('open');document.body.classList.add('sheet-open');const body=active.querySelector('.sheet-body'),record=source&&active.querySelector('#'+source);body.scrollTop=record?record.offsetTop:0;active.querySelector('h2').focus()}document.querySelectorAll('[data-group]').forEach(trigger=>trigger.addEventListener('click',()=>open(trigger.dataset.group,trigger.dataset.source,trigger)));document.querySelectorAll('.sheet-close').forEach(button=>button.addEventListener('click',close));scrim.addEventListener('click',close);document.addEventListener('keydown',event=>{if(event.key==='Escape')close()});const priorities=[...document.querySelectorAll('.priority')],nav=[...document.querySelectorAll('.priority-nav a')];if('IntersectionObserver'in window)new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting)nav.forEach(link=>{const on=link.getAttribute('href')==='#'+entry.target.id;link.classList.toggle('active',on);on?link.setAttribute('aria-current','true'):link.removeAttribute('aria-current')})}),{rootMargin:'-45% 0px -45% 0px',threshold:0}).observe(priorities[0]);priorities.slice(1).forEach(priority=>new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting)nav.forEach(link=>{const on=link.getAttribute('href')==='#'+entry.target.id;link.classList.toggle('active',on);on?link.setAttribute('aria-current','true'):link.removeAttribute('aria-current')})}),{rootMargin:'-45% 0px -45% 0px',threshold:0}).observe(priority))})();</script>
+<script>
+  document.querySelectorAll('.priority').forEach(priority => priority.querySelectorAll('.source-row').forEach((row, index) => {
+    const marker=document.createElement('span'); marker.className='source-row__index'; marker.textContent=String(index+1).padStart(2,'0'); row.prepend(marker); row.querySelector('.source-side')?.classList.add('source-row__meta'); row.querySelector('.source-meta')?.classList.add('source-row__facts'); row.querySelector('.reliability')?.classList.add('reliability-pill');
+    row.querySelectorAll('.source-meta span').forEach(fact=>fact.title=fact.textContent);
+  }));
+  document.querySelectorAll('.sheet').forEach(sheet => {
+    const records=[...sheet.querySelectorAll('.sheet-record')];
+    if (!('IntersectionObserver' in window)) return;
+    const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){records.forEach(record=>record.classList.toggle('is-current',record===entry.target))}}),{root:sheet.querySelector('.sheet-body'),rootMargin:'0px 0px -80% 0px'});
+    records.forEach((record,index)=>{const reliability=record.querySelector('.reliability');const title=record.querySelector('h3');if(title){const head=document.createElement('div');head.className='record-head';const number=document.createElement('span');number.className='record-index';number.textContent=`${String(index+1).padStart(2,'0')} / ${String(records.length).padStart(2,'0')}`;head.append(number);if(reliability){reliability.classList.add('reliability-pill');head.append(reliability)}title.before(head)}observer.observe(record)});
+  });
+</script>
+<script>
+  document.querySelectorAll('.sheet-foot [data-map], .sheet-foot [data-site]').forEach(link => link.addEventListener('click', event => {
+    const sheet=link.closest('.sheet'), record=sheet.querySelector('.sheet-record.is-current') || sheet.querySelector('.sheet-record');
+    const href=link.hasAttribute('data-map') ? record?.dataset.directions : record?.dataset.site;
+    if (!href) { event.preventDefault(); return; }
+    link.href=href; link.target='_blank'; link.rel='noopener noreferrer';
+  }));
+</script>
 </body>
 </html>

@@ -1,0 +1,36 @@
+<style>
+  :root{--header-h:68px}
+  .site-header{position:sticky;top:0;z-index:1000;height:var(--header-h);box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:0 32px 0 40px;background:#0c1a25;border-bottom:1px solid rgba(125,211,252,.10);font-family:"IBM Plex Sans",system-ui,sans-serif}
+  .site-header__home{display:flex;align-items:center;gap:12px;height:36px;margin-left:-10px;padding:0 12px 0 10px;border-radius:8px;color:#e8f1f5;text-decoration:none;transition:background 120ms ease}
+  .site-header__home:hover,.site-menu:hover{background:rgba(125,211,252,.07)}
+  .site-header__icon{display:grid;place-items:center;width:15px;height:15px;color:#8ba3b2}.site-header__home:hover .site-header__icon{color:#35d6c0}
+  .site-header__mark{font:500 10.5px "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.18em;white-space:nowrap}
+  .site-header__right,.site-header__nav{display:flex;align-items:center;gap:clamp(14px,2.2vw,30px);min-width:0}
+  .site-header__nav a{padding:8px 4px;color:#9db6c4;font-size:clamp(12px,1.05vw,13.5px);text-decoration:none;white-space:nowrap;transition:color 120ms ease}.site-header__nav a:hover{color:#e8f1f5}.site-header__nav a[aria-current]{color:#35d6c0}
+  .site-header__count{color:#3f5766;font:500 clamp(9px,.78vw,10px) "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.14em;white-space:nowrap}
+  .site-menu{display:none;height:36px;padding:0 12px;border:0;border-radius:8px;background:none;color:#e8f1f5;font:400 14px "IBM Plex Sans",system-ui,sans-serif;cursor:pointer}.site-menu__caret{display:inline-block;margin-left:6px;transition:transform 120ms ease}.site-menu[aria-expanded="true"] .site-menu__caret{transform:rotate(180deg)}
+  .nav-drawer{position:fixed;top:var(--header-h);left:0;right:0;z-index:999;display:flex;flex-direction:column;background:#0c1a25;border-bottom:1px solid rgba(125,211,252,.10);box-shadow:0 18px 44px rgba(0,0,0,.40)}
+  .nav-drawer a{display:block;padding:15px 40px;border-top:1px solid rgba(125,211,252,.08);color:#c7dbe5;font:400 15px "IBM Plex Sans",system-ui,sans-serif;text-decoration:none}.nav-drawer a:first-child{border-top:0}.nav-drawer a:hover{background:rgba(125,211,252,.06);color:#fff}.nav-drawer a[aria-current]{color:#35d6c0}.nav-drawer__count{padding:14px 40px;border-top:1px solid rgba(125,211,252,.08);color:#3f5766;font:500 9.5px "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.14em}
+  @media(max-width:1100px){.site-header__count{display:none}}
+  @media(max-width:820px){.site-header{padding:0 24px}.site-header__nav{display:none}.site-menu{display:block}}
+</style>
+<header class="site-header">
+  <a class="site-header__home" href="{% url 'homepage' %}" aria-label="Home">
+    <span class="site-header__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+    <span class="site-header__mark">BALTIMORE LIFELINE</span>
+  </a>
+  <div class="site-header__right"><span class="site-header__count" id="site-resource-count"></span><nav class="site-header__nav" aria-label="Primary"><a href="{% url 'resources_map' %}">Map</a><a href="{% url 'questionnaire' %}">Guided Help</a><a href="{% url 'about' %}">About</a><a href="{% url 'community' %}">Feedback</a></nav><button class="site-menu" type="button" aria-expanded="false">Menu<span class="site-menu__caret">⌄</span></button></div>
+</header>
+<script>
+  (() => {
+    const header=document.querySelector('.site-header'), menu=header?.querySelector('.site-menu'); if(!header||!menu)return;
+    const links=[['{% url "resources_map" %}','Map'],['{% url "questionnaire" %}','Guided Help'],['{% url "about" %}','About'],['{% url "community" %}','Feedback']];
+    const path=window.location.pathname, current=url=>new URL(url,window.location.origin).pathname===path||(path.startsWith('/features/')&&url.includes('/about'));
+    header.querySelectorAll('.site-header__nav a').forEach(link=>{if(current(link.getAttribute('href')))link.setAttribute('aria-current','page')});
+    let resourceCount=''; fetch('{% url "resource_count" %}').then(r=>r.ok?r.json():null).then(d=>{if(!d)return;resourceCount=`${d.count} RESOURCES`;const count=document.getElementById('site-resource-count');if(count)count.textContent=resourceCount}).catch(()=>{});
+    const close=()=>{document.querySelector('.nav-drawer')?.remove();menu.setAttribute('aria-expanded','false');};
+    const open=()=>{const drawer=document.createElement('nav');drawer.className='nav-drawer';drawer.setAttribute('aria-label','Mobile navigation');drawer.innerHTML=links.map(([url,label])=>`<a href="${url}"${current(url)?' aria-current="page"':''}>${label}</a>`).join('')+`<span class="nav-drawer__count">${resourceCount}</span>`;drawer.querySelectorAll('a').forEach(a=>a.addEventListener('click',close));document.body.append(drawer);menu.setAttribute('aria-expanded','true');};
+    menu.addEventListener('click',()=>menu.getAttribute('aria-expanded')==='true'?close():open());
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});document.addEventListener('click',e=>{if(!e.target.closest('.site-header,.nav-drawer'))close()});
+  })();
+</script>

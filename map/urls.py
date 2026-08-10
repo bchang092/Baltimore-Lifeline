@@ -8,6 +8,7 @@ from .views import (
     about_page,
     community_page,
     feature_detail_page,
+    resource_count,
     ping,
 )
 
@@ -19,6 +20,7 @@ urlpatterns = [
     path("features/<slug:slug>/", feature_detail_page, name="feature_detail"),
     path("questionnaire/", questionnaire_page, name="questionnaire"),
     path("ping/", ping),
-    path("map/", resources_map, name="resources_map")
+    path("map/", resources_map, name="resources_map"),
+    path("resources/count/", resource_count, name="resource_count"),
     
 ]

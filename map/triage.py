@@ -14,7 +14,7 @@ TIER_LABELS = {
 RELIABILITY_META = [
     {"label": "Highly Reliable", "color": "#22c55e"},
     {"label": "Reliable", "color": "#65a30d"},
-    {"label": "Thin Reviews", "color": "#0891b2"},
+    {"label": "Insufficient Reviews", "color": "#0891b2"},
     {"label": "Mixed Reviews", "color": "#f59e0b"},
     {"label": "Low Reliability", "color": "#ef4444"},
     {"label": "Not Yet Confirmed", "color": "#9ca3af"},
@@ -427,29 +427,12 @@ def _resource_search_text(resource):
     return " | ".join(str(part or "") for part in parts).lower()
 
 
-def _parse_reliability(resource):
-    for key in ("avg_reliability_ratings", "reliability"):
-        raw = str(resource.get(key, "") or "").strip().lower()
-        try:
-            return float(raw)
-        except Exception:
-            continue
-    return None
-
-
 def get_reliability_meta(resource):
-    rating = _parse_reliability(resource)
-    if rating is None:
-        return RELIABILITY_META[5]
-    if rating >= 8:
-        return RELIABILITY_META[0]
-    if rating >= 7:
-        return RELIABILITY_META[1]
-    if rating >= 6:
-        return RELIABILITY_META[2]
-    if rating >= 4:
-        return RELIABILITY_META[3]
-    return RELIABILITY_META[4]
+    classification = str(resource.get("classification") or "").strip().casefold()
+    return next(
+        (meta for meta in RELIABILITY_META if meta["label"].casefold() == classification),
+        RELIABILITY_META[5],
+    )
 
 
 def _availability_bonus(resource):
@@ -462,27 +445,23 @@ def _availability_bonus(resource):
 
 
 def _reliability_penalty(resource, tier):
-    rating = _parse_reliability(resource)
-    if rating is None:
+    label = get_reliability_meta(resource)["label"]
+    if label in {"Not Yet Confirmed", "Insufficient Reviews"}:
         return -8 if tier <= 3 else -4
-    if tier <= 2 and rating < 4:
-        return -55
-    if tier <= 3 and rating < 4:
-        return -35
-    if rating < 5:
-        return -18
-    if rating < 6:
+    if label == "Low Reliability":
+        return -55 if tier <= 2 else -35 if tier <= 3 else -18
+    if label == "Mixed Reviews":
         return -8
     return 0
 
 
 def _warning_note(resource, tier):
-    rating = _parse_reliability(resource)
-    if rating is None:
+    label = get_reliability_meta(resource)["label"]
+    if label in {"Not Yet Confirmed", "Insufficient Reviews"}:
         return "Reliability has not been confirmed yet."
-    if tier <= 2 and rating < 4:
+    if tier <= 2 and label == "Low Reliability":
         return "Use caution: this option may be less dependable for urgent needs."
-    if rating < 5:
+    if label in {"Low Reliability", "Mixed Reviews"}:
         return "Use caution: this option has mixed or lower reliability signals."
     return ""
 
@@ -546,8 +525,7 @@ def _distance_detail(resource, search_profile, relaxed=False):
 def _blocked_for_urgent_reliability(resource, highest_priority, relaxed=False):
     if highest_priority > 2 or relaxed:
         return False
-    rating = _parse_reliability(resource)
-    return rating is not None and rating < 4
+    return get_reliability_meta(resource)["label"] == "Low Reliability"
 
 
 def score_resource_for_tag(resource, tag_key):

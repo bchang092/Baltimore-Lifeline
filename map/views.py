@@ -1,5 +1,6 @@
 from pathlib import Path
 import math
+import random
 
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
@@ -10,8 +11,9 @@ from .models import CommunityFeedback
 from .triage import build_triage_result
 
 
-# Path to your Excel file:  BmoreLine/input_data/1109 Upload_geocoded.xlsx
-XLSX_PATH = Path(settings.BASE_DIR) /"input_data" / "03232026_Upload_geocoded.xlsx"
+# Resource data is read directly from the current master workbook (not SQLite).
+XLSX_PATH = Path(settings.BASE_DIR) / "input_data" / "09092026_MASTER_SHEET.xlsx"
+XLSX_SHEET = "Scraper-Verified"
 
 
 def _to_float(x):
@@ -28,28 +30,7 @@ def _to_float(x):
 
 
 def _load_resources_from_xlsx():
-    """
-    Load resources from the Excel file and return (resources_list, diagnostics_dict).
-
-    Expected headers (case / spacing insensitive; these are what you told me earlier):
-      ID
-      Address
-      Phone Number
-      Email
-      Name of Service
-      Restrictions of Service
-      Days of Service
-      Cateogry of Help
-      Description
-      link to site
-      Legitimate place?
-      called + confirmed?
-      Reliability Rate 1-10
-      Call experience
-      Unnamed: 18
-      Latitude
-      Longitude
-    """
+    """Read the master sheet's saved values, including its Classification column."""
 
     diag = {
         "path": str(XLSX_PATH),
@@ -83,7 +64,7 @@ def _load_resources_from_xlsx():
 
     try:
         wb = load_workbook(filename=str(XLSX_PATH), data_only=True)
-        ws = wb.active
+        ws = wb[XLSX_SHEET]
         diag["sheet_title"] = ws.title
 
         # Header row
@@ -173,6 +154,8 @@ def _load_resources_from_xlsx():
         tag_counts = {c: 0 for c in tag_columns_found}
 
         for row in ws.iter_rows(min_row=2, values_only=True):
+            if not any(value is not None for value in row):
+                continue
             name = str(grab(row, "Name of Service", "Name", default="")).strip()
             address = str(grab(row, "Address", default="")).strip()
             phone = str(grab(row, "Phone Number", "Phone", default="")).strip()
@@ -226,30 +209,10 @@ def _load_resources_from_xlsx():
                 default="",
             )
 
-            reliability_raw = str(
-                grab(row, "Reliability Rate 1-10", "Reliability Rate 1–10", "Reliability", default="")
-            ).strip()
-            avg_reliability_ratings_raw = str(
-                grab(
-                    row,
-                    "avg_reliability_ratings",
-                    "Average Reliability Ratings",
-                    default="",
-                )
-            ).strip()
-            avg_reliability_ratings = (
-                avg_reliability_ratings_raw
-                if avg_reliability_ratings_raw.lower() not in {"", "nan", "none"}
-                else "na"
-            )
+            classification = str(grab(row, "Classification", default="")).strip()
             condensed_reliability_description = str(
-                grab(row, "Condensed Reliability Description", default="")
+                grab(row, "Reliability Description", "Condensed Reliability Description", default="")
             ).strip()
-            reliability = (
-                avg_reliability_ratings
-                if avg_reliability_ratings != "na"
-                else reliability_raw if reliability_raw not in {"", "nan", "none"} else "na"
-            )
 
             call_exp = str(grab(row, "Call experience", default="")).strip()
             extra = str(grab(row, "Unnamed: 18", default="")).strip()
@@ -301,8 +264,7 @@ def _load_resources_from_xlsx():
                 "link": link,
                 "legit": to_bool_flag(legit_raw),
                 "confirmed": to_bool_flag(confirmed_raw),
-                "reliability": reliability,
-                "avg_reliability_ratings": avg_reliability_ratings,
+                "classification": classification,
                 "condensed_reliability_description": condensed_reliability_description,
                 "call_notes": call_notes,
                 "tags": tags,
@@ -317,6 +279,9 @@ def _load_resources_from_xlsx():
 
     except Exception as e:
         diag["errors"].append(f"{type(e).__name__}: {e}")
+    finally:
+        if "wb" in locals():
+            wb.close()
 
     return resources, diag
 
@@ -539,7 +504,13 @@ def actions_page(request):
 
 
 def about_page(request):
-    return render(request, "about.html")
+    founders = [
+        {"name": "Sonya Zhang", "slug": "sonya", "image": "images/founders/sonya-zhang.jpeg", "width": 4720, "height": 3210},
+        {"name": "Brandon Chang", "slug": "brandon", "image": "images/founders/brandon-chang.jpeg", "width": 832, "height": 1248},
+    ]
+    # Neither co-founder permanently occupies the first position.
+    random.shuffle(founders)
+    return render(request, "about.html", {"founders": founders})
 
 
 def community_page(request):

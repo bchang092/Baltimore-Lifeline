@@ -93,7 +93,7 @@
 <div class="tags">
 <span class="tag">{{ resource.category }}</span>
 <span class="reliability good">{{ resource.reliability_meta.label }}</span>
-</div>{% if resource.description %}<p>{{ resource.description }}</p>{% endif %}<dl class="fields">{% if resource.phone_number %}<div>
+</div>{% if resource.description %}<p><strong>Description</strong><br>{{ resource.description }}</p>{% endif %}<dl class="fields">{% if resource.phone_number %}<div>
 <dt>Phone</dt>
 <dd>
 <a href="tel:{{ resource.phone_number }}">{{ resource.phone_number }}</a>
@@ -107,7 +107,7 @@
 </div>{% endif %}{% if resource.restrictions %}<div>
 <dt>Restrictions</dt>
 <dd>{{ resource.restrictions }}</dd>
-</div>{% endif %}</dl>{% if resource.condensed_reliability_description %}<p class="notes">{{ resource.condensed_reliability_description }}</p>{% endif %}</article>{% endfor %}</div>
+</div>{% endif %}{% if resource.link %}<div class="field-address" style="overflow-wrap:anywhere"><dt>Website</dt><dd><a href="{{ resource.link }}" target="_blank" rel="noopener noreferrer">{{ resource.link }}</a></dd></div>{% endif %}</dl>{% if resource.condensed_reliability_description %}<p class="notes">{{ resource.condensed_reliability_description }}</p>{% endif %}</article>{% endfor %}</div>
 <footer class="sheet-foot">
 <a class="action primary" href="#" data-map>Open in Google Maps</a>
 <a class="action secondary" href="#" data-site>Visit site</a>

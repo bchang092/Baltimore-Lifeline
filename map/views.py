@@ -6,8 +6,10 @@ from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_http_methods
 
 from .models import CommunityFeedback
+from .feedback_security import reserve_submission_attempt, turnstile_ready, verify_turnstile
 from .triage import build_triage_result
 
 
@@ -513,6 +515,7 @@ def about_page(request):
     return render(request, "about.html", {"founders": founders})
 
 
+@require_http_methods(["GET", "POST"])
 def community_page(request):
     category_labels = dict(CommunityFeedback.CATEGORY_CHOICES)
     categories = [
@@ -529,6 +532,8 @@ def community_page(request):
         "body": "",
     }
     errors = {}
+    status = 200
+    retry_after = 0
 
     if request.method == "POST":
         form_data = {
@@ -546,6 +551,22 @@ def community_page(request):
             errors["title"] = "Add a short title."
         if not form_data["body"]:
             errors["body"] = "Add your feedback before submitting."
+        for field, maximum in (("name", 120), ("title", 160), ("body", 5000)):
+            if len(form_data[field]) > maximum:
+                errors[field] = f"Use no more than {maximum} characters."
+
+        retry_after = reserve_submission_attempt(request)
+        if retry_after:
+            errors["security"] = "Too many submission attempts. Please try again after the next hour begins."
+            status = 429
+        elif (request.POST.get("website") or "").strip():
+            errors["security"] = "We could not accept this submission. Please reload the page and try again."
+            status = 400
+        elif not errors:
+            error = verify_turnstile(request.POST.get("cf-turnstile-response", ""))
+            if error:
+                errors["security"] = error
+                status = 400 if turnstile_ready() else 503
 
         if not errors:
             CommunityFeedback.objects.create(
@@ -553,7 +574,7 @@ def community_page(request):
                 category=form_data["category"],
                 title=form_data["title"],
                 body=form_data["body"],
-                approved=True,
+                approved=False,
             )
             redirect_url = reverse("community")
             if active_category:
@@ -565,9 +586,9 @@ def community_page(request):
     valid_categories = {value for value, _label in categories}
     if active_category not in valid_categories:
         active_category = ""
-    posts = CommunityFeedback.objects.all().order_by("-created_at")
+    posts = CommunityFeedback.objects.filter(approved=True).order_by("-created_at")
 
-    return render(
+    response = render(
         request,
         "community.html",
         {
@@ -577,8 +598,13 @@ def community_page(request):
             "form_data": form_data,
             "errors": errors,
             "submitted": request.GET.get("submitted") == "1",
+            "turnstile_site_key": settings.TURNSTILE_SITE_KEY if turnstile_ready() else "",
         },
+        status=status,
     )
+    if retry_after:
+        response["Retry-After"] = str(retry_after)
+    return response
 
 
 def feature_detail_page(request, slug):

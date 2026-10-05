@@ -26,3 +26,10 @@ class CommunityFeedback(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class FeedbackRateLimit(models.Model):
+    # HMAC of IP + hourly window; do not persist the raw IP address.
+    key = models.CharField(max_length=64, primary_key=True)
+    attempts = models.PositiveIntegerField(default=0)
+    expires_at = models.DateTimeField(db_index=True)

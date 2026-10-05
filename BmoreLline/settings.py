@@ -121,3 +121,17 @@ if not DATABASE_URL:
     WHITENOISE_AUTOREFRESH = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Feedback submissions fail closed until both Turnstile keys are configured.
+TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "").strip()
+TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY", "").strip()
+TURNSTILE_HOSTNAMES = [
+    host.strip().lower() for host in os.environ.get(
+        "TURNSTILE_HOSTNAMES",
+        "baltimorelifeline.site,www.baltimorelifeline.site",
+    ).split(",") if host.strip()
+]
+FEEDBACK_RATE_LIMIT = 5  # Submission attempts per IP per clock hour.
+# Heroku appends the connecting client's IP to the right of X-Forwarded-For.
+# Only trust this header when deployed behind that router.
+FEEDBACK_TRUST_HEROKU_PROXY = bool(os.environ.get("DYNO"))

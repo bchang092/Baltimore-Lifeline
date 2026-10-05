@@ -85,6 +85,54 @@ visible until you hide it. The approval checkbox is also editable on individual 
 5. Six attempts from the same IP in one clock hour should return a rate-limit
    message. Failed validation also counts, so avoid locking yourself out during testing.
 
+## Gmail approval notifications
+
+New valid submissions can send an email from one Gmail account to another (or the
+same account). The email includes the feedback title, type, name/alias, full text,
+and a direct admin review link. Rejected submissions do not trigger email.
+
+1. Sign into the **sending** Gmail account and enable **2-Step Verification** in
+   [Google Account Security](https://myaccount.google.com/security).
+2. Open [App passwords](https://myaccount.google.com/apppasswords), create one named
+   `Baltimore Lifeline`, and copy the generated password. Use this app password,
+   not your normal Gmail password. Keep it private.
+3. In Heroku → `baltimore-lifeline` → **Settings → Reveal Config Vars**, add:
+
+   | Key | Value |
+   | --- | --- |
+   | `EMAIL_HOST_USER` | The full Gmail address sending notifications |
+   | `EMAIL_HOST_PASSWORD` | The generated Google app password |
+   | `FEEDBACK_NOTIFICATION_EMAIL` | `bchang092@gmail.com` (the default if this config var is absent) |
+
+4. Deploy the email changes. **No new database migration is needed for email.**
+5. Submit a test through the live feedback form. Check the recipient's Inbox and
+   Spam folder. The email's review link should open the saved feedback in admin;
+   signing in is still required, and opening the link does not approve the post.
+
+The SMTP server (`smtp.gmail.com`), port (`587`), and TLS are already configured.
+`FEEDBACK_SITE_URL` defaults to `https://baltimorelifeline.site`; change it only if
+you want review links to use a different trusted site address. The secret is read
+only on the server. You do not need to send credentials in chat or edit source code.
+
+If Google does not offer App passwords, check that 2-Step Verification is enabled.
+Advanced Protection and some organization/security-key-only account configurations
+do not allow them. Changing your Google account password revokes existing app
+passwords; generate a replacement and update Heroku if that happens.
+See [Google's app password instructions](https://support.google.com/accounts/answer/185833?hl=en).
+
+Email is attempted once after the database commit. If configuration is missing or
+delivery fails (including Gmail limits), feedback remains saved and unapproved,
+and the app logs a message with its feedback ID. There is no automatic retry or
+email backfill for old submissions. Continue checking the admin queue if Gmail
+is unavailable. View delivery error messages with:
+
+```sh
+heroku logs --tail --app baltimore-lifeline
+```
+
+Automated tests use Django's in-memory email backend; they send no real mail.
+Live Gmail delivery must be tested after you configure the credentials and deploy.
+
 ## Local development and automated tests
 
 Use environment variables (this project does not automatically load `.env` files).

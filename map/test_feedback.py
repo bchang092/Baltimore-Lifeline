@@ -7,6 +7,8 @@ from urllib.parse import parse_qs
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.core import mail
+from django.db import transaction
 from django.test import Client, RequestFactory, TestCase, override_settings
 
 from .feedback_security import client_ip
@@ -20,6 +22,12 @@ from .models import CommunityFeedback, FeedbackRateLimit
     TURNSTILE_HOSTNAMES=["baltimorelifeline.site"],
     FEEDBACK_TRUST_HEROKU_PROXY=False,
     FEEDBACK_RATE_LIMIT=5,
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    EMAIL_HOST_USER="sender@gmail.com",
+    EMAIL_HOST_PASSWORD="test-app-password",
+    DEFAULT_FROM_EMAIL="sender@gmail.com",
+    FEEDBACK_NOTIFICATION_EMAIL="reviewer@gmail.com",
+    FEEDBACK_SITE_URL="https://baltimorelifeline.site",
 )
 class FeedbackProtectionTests(TestCase):
     def setUp(self):
@@ -152,3 +160,71 @@ class FeedbackProtectionTests(TestCase):
             post.refresh_from_db()
             self.assertEqual(post.approved, expected)
         self.assertNotIn("approved", admin.site._registry[CommunityFeedback].get_exclude(None) or ())
+
+    def test_pending_feedback_sends_one_email_after_commit_with_review_link(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.post()
+            self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        post = CommunityFeedback.objects.get()
+        message = mail.outbox[0]
+        self.assertEqual(message.from_email, "sender@gmail.com")
+        self.assertEqual(message.to, ["reviewer@gmail.com"])
+        self.assertIn(post.title, message.body)
+        self.assertIn(post.body, message.body)
+        self.assertIn(
+            f"https://baltimorelifeline.site/admin/map/communityfeedback/{post.pk}/change/",
+            message.body,
+        )
+        self.assertNotIn("test-app-password", message.body)
+        self.assertFalse(post.approved)
+
+    def test_rejected_submissions_never_send_email(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            self.post(website="spam")
+            self.post(**{"cf-turnstile-response": ""})
+            self.post(body="")
+            self.post(website="spam")
+            self.post(website="spam")
+            self.assertEqual(self.post().status_code, 429)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_notification_failure_preserves_pending_feedback_and_success_response(self):
+        from smtplib import SMTPAuthenticationError
+        for failure in (SMTPAuthenticationError(535, b"bad credentials"), TimeoutError()):
+            with self.subTest(failure=failure):
+                with patch("map.feedback_notifications.send_mail", side_effect=failure):
+                    with self.assertLogs("map.feedback_notifications", level="ERROR"):
+                        with self.captureOnCommitCallbacks(execute=True):
+                            self.assertEqual(self.post().status_code, 302)
+        self.assertEqual(CommunityFeedback.objects.filter(approved=False).count(), 2)
+        self.assertEqual(len(mail.outbox), 0)
+
+    @override_settings(EMAIL_HOST_PASSWORD="")
+    def test_unconfigured_email_does_not_block_feedback(self):
+        with patch("map.feedback_notifications.send_mail") as send:
+            with self.assertLogs("map.feedback_notifications", level="WARNING"):
+                with self.captureOnCommitCallbacks(execute=True):
+                    self.assertEqual(self.post().status_code, 302)
+            send.assert_not_called()
+        self.assertFalse(CommunityFeedback.objects.get().approved)
+
+    def test_rolled_back_feedback_does_not_send_notification(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            try:
+                with transaction.atomic():
+                    self.post()
+                    raise ValueError("Simulate transaction rollback")
+            except ValueError:
+                pass
+        self.assertFalse(CommunityFeedback.objects.exists())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_user_text_cannot_inject_email_headers(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.post(title="Hello\r\nBcc: attacker@example.com")
+        self.assertEqual(response.status_code, 302)
+        message = mail.outbox[0]
+        self.assertNotIn("Bcc", message.subject)
+        self.assertEqual(message.recipients(), ["reviewer@gmail.com"])

@@ -135,3 +135,20 @@ FEEDBACK_RATE_LIMIT = 5  # Submission attempts per IP per clock hour.
 # Heroku appends the connecting client's IP to the right of X-Forwarded-For.
 # Only trust this header when deployed behind that router.
 FEEDBACK_TRUST_HEROKU_PROXY = bool(os.environ.get("DYNO"))
+
+# Gmail notifications for feedback awaiting moderation. Set credentials in Heroku.
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_TIMEOUT = 5
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "").strip()
+# Google displays app passwords in groups separated by spaces.
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "").replace(" ", "").strip()
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+FEEDBACK_NOTIFICATION_EMAIL = os.environ.get(
+    "FEEDBACK_NOTIFICATION_EMAIL", "bchang092@gmail.com"
+).strip()
+FEEDBACK_SITE_URL = os.environ.get(
+    "FEEDBACK_SITE_URL", "https://baltimorelifeline.site"
+).strip().rstrip("/")

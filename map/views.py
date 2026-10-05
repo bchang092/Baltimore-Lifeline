@@ -1,8 +1,10 @@
 from pathlib import Path
 import math
 import random
+from functools import partial
 
 from django.conf import settings
+from django.db import transaction
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -10,6 +12,7 @@ from django.views.decorators.http import require_http_methods
 
 from .models import CommunityFeedback
 from .feedback_security import reserve_submission_attempt, turnstile_ready, verify_turnstile
+from .feedback_notifications import notify_feedback_pending
 from .triage import build_triage_result
 
 
@@ -569,13 +572,14 @@ def community_page(request):
                 status = 400 if turnstile_ready() else 503
 
         if not errors:
-            CommunityFeedback.objects.create(
+            feedback = CommunityFeedback.objects.create(
                 name=form_data["name"],
                 category=form_data["category"],
                 title=form_data["title"],
                 body=form_data["body"],
                 approved=False,
             )
+            transaction.on_commit(partial(notify_feedback_pending, feedback), robust=True)
             redirect_url = reverse("community")
             if active_category:
                 redirect_url = f"{redirect_url}?submitted=1&category={active_category}"

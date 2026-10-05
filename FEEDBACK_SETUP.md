@@ -1,14 +1,15 @@
 # Community feedback spam protection
 
 New submissions require Cloudflare Turnstile verification, pass a hidden honeypot,
-and are saved **unapproved**. Both the home page and community board show only
-approved posts. The Django admin supports bulk approval and hiding.
+and are **published immediately** after passing all checks. No manual approval is
+required for new submissions. Both the home page and community board exclude hidden
+posts. The Django admin still supports bulk hiding and republishing.
 
 The existing database limits each IP to five POST attempts per clock hour,
 including failed checks. Counters are shared between web workers/dynos; no Redis
 or paid service is required. Expired counters are removed on subsequent attempts.
 Only an HMAC of the IP and hour is stored, not the raw IP. People sharing a network
-share the limit. This reduces abuse; it does not replace moderation.
+share the limit. Bot checks reduce abuse but cannot catch every spam post; you can hide any that get through.
 
 ## 1. Create a free Turnstile widget
 
@@ -65,13 +66,14 @@ heroku run python manage.py createsuperuser --app baltimore-lifeline
 
 Open `https://baltimorelifeline.site/admin/` → **Community feedbacks**.
 
-- Filter **Approved → No** to review new submissions.
+- New submissions publish automatically; **Approved → No** lists hidden or older pending posts.
 - Select legitimate posts → **Approve selected feedback (publish)** → **Go**.
 - Select existing spam → **Hide selected feedback (mark unapproved)** → **Go**.
 - For a clean slate, select all existing posts (use the select-all-results link
   if they span multiple pages), hide them, then approve the legitimate ones.
 - Django's existing delete action can permanently remove selected spam if desired.
 
+Previously hidden or pending posts remain hidden until you choose to publish them.
 Existing posts are not automatically hidden or deleted because the code cannot
 reliably distinguish legitimate feedback from spam. Already approved spam remains
 visible until you hide it. The approval checkbox is also editable on individual posts.
@@ -79,13 +81,13 @@ visible until you hide it. The approval checkbox is also editable on individual 
 ## 5. Check the live setup
 
 1. Open `/community/`, open the form, and confirm the bot check loads.
-2. Submit feedback; you should see the review confirmation. It should not be public.
-3. Approve it in admin; check that it appears on the community board and home page.
-4. Hide it in admin; check that it disappears from both pages.
+2. Submit feedback; you should see the posted confirmation and the new post on the board and home page.
+3. Hide it in admin; check that it disappears from both pages.
+4. Approve it again in admin; check that it reappears.
 5. Six attempts from the same IP in one clock hour should return a rate-limit
    message. Failed validation also counts, so avoid locking yourself out during testing.
 
-## Gmail approval notifications
+## Gmail new-feedback notifications
 
 New valid submissions can send an email from one Gmail account to another (or the
 same account). The email includes the feedback title, type, name/alias, full text,
@@ -121,9 +123,9 @@ passwords; generate a replacement and update Heroku if that happens.
 See [Google's app password instructions](https://support.google.com/accounts/answer/185833?hl=en).
 
 Email is attempted once after the database commit. If configuration is missing or
-delivery fails (including Gmail limits), feedback remains saved and unapproved,
+delivery fails (including Gmail limits), feedback remains saved and published,
 and the app logs a message with its feedback ID. There is no automatic retry or
-email backfill for old submissions. Continue checking the admin queue if Gmail
+email backfill for old submissions. Continue checking the community board if Gmail
 is unavailable. View delivery error messages with:
 
 ```sh
@@ -151,7 +153,7 @@ Use a separate widget to keep local hostnames out of the production widget. The
 backend checks both hostname and action; dummy responses may not provide matching
 values, so the automated tests mock complete verification responses instead.
 
-Run `python manage.py test`. Tests mock the verification service and cover pending
+Run `python manage.py test`. Tests mock the verification service and cover immediate
 publication, moderation, invalid/missing/replayed tokens, hostname/action checks,
 network failures, missing configuration, honeypots, length limits, shared counters,
 counter expiry, forwarded-header spoofing, and CSRF protection.

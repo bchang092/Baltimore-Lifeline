@@ -13,7 +13,7 @@
 <body>{% include "partials/site_header.html" %}
   <main>
     <section class="community-hero"><div><div class="eyebrow">Community Feedback</div><h1>Community Feedback</h1><p>Suggestions, corrections, bug reports, and service experiences from the community.</p></div><button class="btn-primary" type="button" data-open-modal>Submit feedback</button></section>
-    {% if submitted %}<div class="banner" id="success-toast" role="status">Thanks! Your feedback was submitted for review and will appear after approval.</div>{% endif %}
+    {% if submitted %}<div class="banner" id="success-toast" role="status">Thanks! Your feedback has been posted.</div>{% endif %}
     <section class="toolbar" aria-label="Post filters"><div class="post-count" id="post-count"></div><div class="type-filters"><span class="toolbar-label">Filter</span><button class="type-filter" data-filter="" aria-pressed="true">All</button>{% for value,label in categories %}<button class="type-filter" data-filter="{{ value }}" aria-pressed="false">{{ label }}</button>{% endfor %}</div></section>
     <section class="feed" aria-label="Community posts" id="post-feed">{% if posts %}{% for post in posts %}<article class="post" data-category="{{ post.category }}"><div class="post-gutter"><div class="post-type">{{ post.get_category_display }}</div><div class="post-date">{{ post.created_at|date:"M j, Y" }}</div>{% if post.name %}<div class="post-author">{{ post.name }}</div>{% endif %}</div><div><h2 class="post-title">{{ post.title }}</h2><p class="post-body">{{ post.body }}</p></div></article>{% endfor %}<div class="empty" id="filtered-empty" hidden><p></p><p></p><button class="text-link" type="button" data-show-all>Show all posts</button></div>{% else %}<div class="empty"><p>Nothing here yet.</p><p>If a listing is out of date, a service has moved, or something is missing from the map, this is where to say so.</p><button class="text-link" type="button" data-open-modal>Write the first post →</button></div>{% endif %}</section>
   </main>
@@ -27,7 +27,7 @@
         <p class="error-text" role="status">Feedback submissions are temporarily unavailable. Please try again later.</p>
       {% endif %}
       {% if errors.security %}<p class="error-text" role="alert">{{ errors.security }}</p>{% endif %}
-    </div><div class="submit-row"><button class="btn-primary" type="submit"{% if not turnstile_site_key %} disabled{% endif %}>Submit for review</button><div class="help-text">Feedback appears after review and approval.</div></div></form></div></div>
+    </div><div class="submit-row"><button class="btn-primary" type="submit"{% if not turnstile_site_key %} disabled{% endif %}>Post feedback</button><div class="help-text">Feedback appears immediately after the bot check.</div></div></form></div></div>
   <script>
     (() => {
       const modal = document.getElementById('feedback-modal');

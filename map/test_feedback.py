@@ -48,17 +48,17 @@ class FeedbackProtectionTests(TestCase):
     def post(self, **changes):
         return self.client.post("/community/", self.payload | changes)
 
-    def test_verified_submission_is_pending_and_not_public_until_approved(self):
+    def test_verified_submission_is_public_immediately_and_can_be_hidden(self):
         response = self.post()
         self.assertRedirects(response, "/community/?submitted=1")
         post = CommunityFeedback.objects.get()
-        self.assertFalse(post.approved)
-        for url in ("/", "/community/"):
-            self.assertNotContains(self.client.get(url), post.title)
-        post.approved = True
-        post.save()
+        self.assertTrue(post.approved)
         for url in ("/", "/community/"):
             self.assertContains(self.client.get(url), post.title)
+        post.approved = False
+        post.save()
+        for url in ("/", "/community/"):
+            self.assertNotContains(self.client.get(url), post.title)
         request = self.verify.call_args.args[0]
         self.assertEqual(request.full_url, "https://challenges.cloudflare.com/turnstile/v0/siteverify")
         self.assertEqual(parse_qs(request.data.decode()), {
@@ -161,7 +161,7 @@ class FeedbackProtectionTests(TestCase):
             self.assertEqual(post.approved, expected)
         self.assertNotIn("approved", admin.site._registry[CommunityFeedback].get_exclude(None) or ())
 
-    def test_pending_feedback_sends_one_email_after_commit_with_review_link(self):
+    def test_published_feedback_sends_one_email_after_commit_with_admin_link(self):
         with self.captureOnCommitCallbacks(execute=True):
             response = self.post()
             self.assertEqual(len(mail.outbox), 0)
@@ -177,8 +177,10 @@ class FeedbackProtectionTests(TestCase):
             f"https://baltimorelifeline.site/admin/map/communityfeedback/{post.pk}/change/",
             message.body,
         )
+        self.assertIn("has been published", message.body)
+        self.assertNotIn("awaiting approval", message.subject)
         self.assertNotIn("test-app-password", message.body)
-        self.assertFalse(post.approved)
+        self.assertTrue(post.approved)
 
     def test_rejected_submissions_never_send_email(self):
         with self.captureOnCommitCallbacks(execute=True):
@@ -190,7 +192,7 @@ class FeedbackProtectionTests(TestCase):
             self.assertEqual(self.post().status_code, 429)
         self.assertEqual(len(mail.outbox), 0)
 
-    def test_notification_failure_preserves_pending_feedback_and_success_response(self):
+    def test_notification_failure_preserves_published_feedback_and_success_response(self):
         from smtplib import SMTPAuthenticationError
         for failure in (SMTPAuthenticationError(535, b"bad credentials"), TimeoutError()):
             with self.subTest(failure=failure):
@@ -198,7 +200,7 @@ class FeedbackProtectionTests(TestCase):
                     with self.assertLogs("map.feedback_notifications", level="ERROR"):
                         with self.captureOnCommitCallbacks(execute=True):
                             self.assertEqual(self.post().status_code, 302)
-        self.assertEqual(CommunityFeedback.objects.filter(approved=False).count(), 2)
+        self.assertEqual(CommunityFeedback.objects.filter(approved=True).count(), 2)
         self.assertEqual(len(mail.outbox), 0)
 
     @override_settings(EMAIL_HOST_PASSWORD="")
@@ -208,7 +210,7 @@ class FeedbackProtectionTests(TestCase):
                 with self.captureOnCommitCallbacks(execute=True):
                     self.assertEqual(self.post().status_code, 302)
             send.assert_not_called()
-        self.assertFalse(CommunityFeedback.objects.get().approved)
+        self.assertTrue(CommunityFeedback.objects.get().approved)
 
     def test_rolled_back_feedback_does_not_send_notification(self):
         with self.captureOnCommitCallbacks(execute=True):

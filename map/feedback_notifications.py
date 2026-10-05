@@ -11,7 +11,7 @@ from django.urls import reverse
 logger = logging.getLogger(__name__)
 
 
-def notify_feedback_pending(feedback):
+def notify_feedback_received(feedback):
     if not (
         settings.EMAIL_HOST_USER
         and settings.EMAIL_HOST_PASSWORD
@@ -28,8 +28,8 @@ def notify_feedback_pending(feedback):
     )
     # Keep user-supplied text out of email headers and send it as plain text.
     body = (
-        "New community feedback is waiting for your approval. It is not public yet.\n\n"
-        f"Review in Django admin (sign-in required):\n{review_url}\n\n"
+        "New community feedback has been published on Baltimore Lifeline.\n\n"
+        f"Manage or hide this post in Django admin (sign-in required):\n{review_url}\n\n"
         f"Type: {feedback.get_category_display()}\n"
         f"Name or alias: {feedback.name or 'Anonymous'}\n"
         f"Title: {feedback.title}\n\n"
@@ -37,7 +37,7 @@ def notify_feedback_pending(feedback):
     )
     try:
         sent = send_mail(
-            subject=f"[Baltimore Lifeline] Feedback #{feedback.pk} awaiting approval",
+            subject=f"[Baltimore Lifeline] New feedback #{feedback.pk}",
             message=body,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[settings.FEEDBACK_NOTIFICATION_EMAIL],

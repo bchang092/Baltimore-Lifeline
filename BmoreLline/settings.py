@@ -136,7 +136,7 @@ FEEDBACK_RATE_LIMIT = 5  # Submission attempts per IP per clock hour.
 # Only trust this header when deployed behind that router.
 FEEDBACK_TRUST_HEROKU_PROXY = bool(os.environ.get("DYNO"))
 
-# Gmail notifications for feedback awaiting moderation. Set credentials in Heroku.
+# Gmail notifications for newly published feedback. Set credentials in Heroku.
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587

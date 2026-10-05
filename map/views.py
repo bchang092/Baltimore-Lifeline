@@ -12,7 +12,7 @@ from django.views.decorators.http import require_http_methods
 
 from .models import CommunityFeedback
 from .feedback_security import reserve_submission_attempt, turnstile_ready, verify_turnstile
-from .feedback_notifications import notify_feedback_pending
+from .feedback_notifications import notify_feedback_received
 from .triage import build_triage_result
 
 
@@ -577,9 +577,9 @@ def community_page(request):
                 category=form_data["category"],
                 title=form_data["title"],
                 body=form_data["body"],
-                approved=False,
+                approved=True,
             )
-            transaction.on_commit(partial(notify_feedback_pending, feedback), robust=True)
+            transaction.on_commit(partial(notify_feedback_received, feedback), robust=True)
             redirect_url = reverse("community")
             if active_category:
                 redirect_url = f"{redirect_url}?submitted=1&category={active_category}"
